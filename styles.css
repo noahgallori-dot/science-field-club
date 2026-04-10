@@ -1095,10 +1095,35 @@ body.modal-open {
 
     .mobile-menu-btn {
         display: block;
+        transition: transform 0.2s ease;
+    }
+
+    .sticky-header-wrapper {
+        transition: background-color 0.4s ease, box-shadow 0.4s ease;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    .sticky-header-wrapper.scrolled {
+        background: #ffffff;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .sticky-header-wrapper.scrolled .navbar {
+        padding: 0.75rem 0; /* Minimal shrink for mobile to stay snappy */
+    }
+
+    .sticky-header-wrapper.scrolled .top-bar {
+        max-height: 0;
+        overflow: hidden;
+        border: none;
+        padding: 0;
+        opacity: 0;
+        transition: all 0.3s ease;
     }
 
     .hero-title {
-        font-size: 3rem;
+        font-size: 2.75rem;
     }
 
     .grid-2,
