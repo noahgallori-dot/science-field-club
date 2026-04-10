@@ -107,8 +107,7 @@ body {
     background-color: var(--bg-base);
     color: var(--text-main);
     line-height: 1.6;
-    padding-top: 110px; /* Account for fixed header */
-    overflow-x: hidden;
+    overflow-x: clip;
 
     /* Hide scrollbars but keep scrolling */
     scrollbar-width: none;
@@ -162,6 +161,26 @@ body.modal-open {
 }
 
 /* Base Buttons */
+/* Sticky Header Wrapper */
+.sticky-header-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    width: 100%;
+    background: transparent;
+    transition: background-color 0.4s ease, box-shadow 0.4s ease, backdrop-filter 0.4s ease;
+    will-change: background-color, backdrop-filter, box-shadow;
+    transform: translateZ(0);
+}
+
+.sticky-header-wrapper.scrolled {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    box-shadow: 0 10px 40px -10px rgba(18, 40, 76, 0.15);
+}
+
 .date-icon-wrapper {
     display: inline-flex;
     align-items: center;
@@ -244,33 +263,64 @@ body.modal-open {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-/* Locked Navigation Container */
-.sticky-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    background: #fff;
-}
-
 /* Top Bar */
 .top-bar {
-    background: var(--secondary);
-    padding: 0.6rem 0;
+    background: rgba(234, 221, 202, 0.9);
+    padding: 0.7rem 0;
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--text-navy);
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid var(--secondary-dark);
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    border-bottom: 1px solid rgba(18, 40, 76, 0.1);
+    position: relative;
+    z-index: 10;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-header-wrapper.scrolled .top-bar {
+    background: rgba(234, 221, 202, 0.5);
+    padding: 0.45rem 0;
+    font-size: 0.8rem;
+}
+
+.top-bar.urgent {
+    background: #fff5f5;
+    border-bottom: 1px solid #feb2b2;
+    color: #c53030;
+    animation: urgent-pulse 2s infinite;
+}
+
+@keyframes urgent-pulse {
+    0% {
+        background-color: #fff5f5;
+    }
+
+    50% {
+        background-color: #ffffff;
+    }
+
+    100% {
+        background-color: #fff5f5;
+    }
+}
+
+.top-bar.urgent strong {
+    background: rgba(197, 48, 48, 0.1);
+    color: #c53030;
 }
 
 /* Navigation */
 .navbar {
-    background: #ffffff;
-    border-bottom: 1px solid var(--border-color);
-    padding: 1rem 0;
+    background: transparent;
+    border-bottom: 1px solid transparent;
+    padding: 1.5rem 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-header-wrapper.scrolled .navbar {
+    padding: 0.8rem 0;
+    border-bottom-color: rgba(18, 40, 76, 0.1);
 }
 
 .nav-container {
@@ -340,7 +390,8 @@ body.modal-open {
 
 /* Hero Section */
 .hero {
-    padding: 6rem 0 7rem;
+    padding: 12rem 0 8rem;
+    /* Slightly more height for the group photo */
     text-align: center;
     position: relative;
     border-bottom: 1px solid var(--border-color);
@@ -358,10 +409,9 @@ body.modal-open {
     background-image: url('images/omsi.jpg');
     background-size: cover;
     background-position: center;
-    opacity: 0.30;
-    /* Less fade */
+    /* Centered people as requested */
+    opacity: 0.28;
     filter: blur(3px) grayscale(20%);
-    /* Blur it */
     z-index: 0;
 }
 

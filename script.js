@@ -261,9 +261,9 @@ function renderAdminLists() {
     const docsList = document.getElementById('admin-docs-list');
     if (docsList) {
         docsList.innerHTML = appData.adminDocs.map(doc => `
-            <div class="manage-item">
+            <div class="manage-item card-item">
                 <div class="item-info">
-                    <strong>${doc.name}</strong>
+                    <strong style="color: var(--primary);">${doc.name}</strong>
                     <span>${doc.url}</span>
                 </div>
                 <div class="item-actions">
@@ -295,9 +295,9 @@ function renderAdminLists() {
     const calList = document.getElementById('admin-calendar-list');
     if (calList) {
         calList.innerHTML = appData.calendar.map(event => `
-            <div class="manage-item">
+            <div class="manage-item card-item">
                 <div class="item-info">
-                    <strong>${event.title}</strong>
+                    <strong style="color: var(--primary);">${event.title}</strong>
                     <div class="item-meta">${formatDateForDisplay(event.date)} • ${capitalize(event.type)}</div>
                     <span style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem;">${event.description}</span>
                 </div>
@@ -344,9 +344,15 @@ function updateTimelineHeader() {
     }
 
     if (bannerMsg) {
-        const topBarContainer = document.querySelector('.top-bar .container');
+        const topBar = document.querySelector('.top-bar');
+        const topBarContainer = topBar ? topBar.querySelector('.container') : null;
         if (topBarContainer) {
             topBarContainer.innerHTML = `<span><i data-lucide="bell" style="width: 16px; height: 16px; margin-right: 6px; position: relative; top: 3px; display: inline-block;"></i> ${bannerMsg}</span>`;
+            if (todaysEvents.length > 0) {
+                topBar.classList.add('urgent');
+            } else {
+                topBar.classList.remove('urgent');
+            }
             if (window.lucide) window.lucide.createIcons();
         }
     }
@@ -370,6 +376,26 @@ document.querySelectorAll('.nav-links a').forEach(link => {
         navLinks.classList.remove('active');
     });
 });
+
+// --- SCROLL EFFECTS ---
+const headerWrapper = document.querySelector('.sticky-header-wrapper');
+let isScrolled = false;
+
+function updateHeader() {
+    const shouldScroll = window.scrollY > 50;
+    if (shouldScroll !== isScrolled) {
+        isScrolled = shouldScroll;
+        if (isScrolled) {
+            headerWrapper.classList.add('scrolled');
+        } else {
+            headerWrapper.classList.remove('scrolled');
+        }
+    }
+}
+
+window.addEventListener('scroll', () => {
+    requestAnimationFrame(updateHeader);
+}, { passive: true });
 
 // Admin Modal Logic
 function openAdmin() {
