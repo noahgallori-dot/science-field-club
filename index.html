@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Science Field Club | Banks, Oregon</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
     <meta name="description" content="Sparking curiosity through hands-on field trips, teamwork, and exploration.">
     <link rel="stylesheet" href="styles.css">
     <link
@@ -24,39 +25,43 @@
         </div>
     </div>
 
-    <!-- Top Alert Bar -->
-    <div class="top-bar">
-        <div class="container">
-            <span><strong>Next Event:</strong> April 9 - OMSI Review & Zoo Prep Meeting</span>
+    <!-- Fixed Header -->
+    <div class="sticky-header">
+        <!-- Top Alert Bar -->
+        <div class="top-bar">
+            <div class="container">
+                <span><strong>Next Event:</strong> April 9 - OMSI Review & Zoo Prep Meeting</span>
+            </div>
         </div>
-    </div>
 
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <i data-lucide="atom" class="logo-icon"></i>
-                <span class="logo-text">BHS Science<br class="mobile-break"> Field Club</span>
-            </div>
-            <div class="nav-right">
-                <div class="nav-links">
-                    <a href="#about">About</a>
-                    <a href="#events">Schedule</a>
-                    <a href="#resources">Student Resources</a>
-                    <a href="#trip-teams">Trip Teams</a>
-                    <a href="#officers">Officers</a>
-                    <a href="#" onclick="openAdmin(); event.preventDefault();" class="mobile-login-link">Officer Login
-                        <i data-lucide="lock" style="width: 14px; height: 14px; margin-left: 4px;"></i></a>
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="logo">
+                    <i data-lucide="atom" class="logo-icon"></i>
+                    <span class="logo-text">BHS Science<br class="mobile-break"> Field Club</span>
                 </div>
-                <div class="nav-actions">
-                    <button class="btn btn-outline-navy" onclick="openAdmin()"
-                        style="font-family: var(--font-heading);"><i data-lucide="lock"
-                            style="width: 14px; height: 14px; margin-right: 4px;"></i> Officer Login</button>
-                    <button class="mobile-menu-btn"><i data-lucide="menu"></i></button>
+                <div class="nav-right">
+                    <div class="nav-links">
+                        <a href="#about">About</a>
+                        <a href="#events">Schedule</a>
+                        <a href="#resources">Student Resources</a>
+                        <a href="#trip-teams">Trip Teams</a>
+                        <a href="#officers">Officers</a>
+                        <a href="#" onclick="openAdmin(); event.preventDefault();" class="mobile-login-link">Officer
+                            Login
+                            <i data-lucide="lock" style="width: 14px; height: 14px; margin-left: 4px;"></i></a>
+                    </div>
+                    <div class="nav-actions">
+                        <button class="btn btn-outline-navy" onclick="openAdmin()"
+                            style="font-family: var(--font-heading);"><i data-lucide="lock"
+                                style="width: 14px; height: 14px; margin-right: 4px;"></i> Officer Login</button>
+                        <button class="mobile-menu-btn"><i data-lucide="menu"></i></button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </div>
 
     <!-- Hero Section -->
     <header class="hero">

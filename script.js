@@ -96,12 +96,13 @@ async function loadDataAndSync() {
         if (hasCloudData) {
             // We use cloud data, but we de-duplicate and SORT it!
             appData.calendar = deduplicate(cal.data || [], 'title').sort((a, b) => {
-                const year = new Date().getFullYear();
-                return new Date(`${a.date}, ${year}`) - new Date(`${b.date}, ${year}`);
+                const dateA = parseDate(a.date);
+                const dateB = parseDate(b.date);
+                return dateA - dateB;
             });
             appData.resources = deduplicate(res.data || [], 'title');
             appData.adminDocs = deduplicate(docs.data || [], 'name');
-            
+
             // Save our clean, sorted copy back to local storage
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
         } else {
@@ -161,22 +162,24 @@ function renderTimeline() {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const currentYear = today.getFullYear();
 
     // Sort events by date before rendering
     const sortedEvents = [...appData.calendar].sort((a, b) => {
-        const dateA = new Date(`${a.date}, ${currentYear}`);
-        const dateB = new Date(`${b.date}, ${currentYear}`);
+        const dateA = parseDate(a.date);
+        const dateB = parseDate(b.date);
+        dateA.setHours(0, 0, 0, 0);
+        dateB.setHours(0, 0, 0, 0);
         return dateA - dateB;
     });
 
     container.innerHTML = sortedEvents.map(event => {
-        const eventDate = new Date(`${event.date}, ${currentYear}`);
+        const eventDate = parseDate(event.date);
         eventDate.setHours(0, 0, 0, 0);
         const isPast = eventDate < today;
 
         let tagClass = 'tag-info';
         let tagText = event.type || 'Meeting';
+        
         if (isPast) {
             tagClass = 'tag-muted';
             tagText = 'Completed';
@@ -196,7 +199,7 @@ function renderTimeline() {
 
         return `
             <div class="timeline-item ${isPast ? 'past-event' : ''}">
-                <div class="timeline-date">${event.date}</div>
+                <div class="timeline-date">${formatDateForDisplay(event.date)}</div>
                 <div class="timeline-content card-beige ${!isPast && eventDate.getTime() === today.getTime() ? 'highlight-content' : ''}">
                     <div class="event-tag ${tagClass}">${tagText}</div>
                     <h3>${event.title}</h3>
@@ -206,6 +209,29 @@ function renderTimeline() {
             </div>
         `;
     }).join('');
+}
+
+function formatDateForDisplay(dateStr) {
+    if (!dateStr) return "";
+    // If it's already "Month Day" and not ISO, return as is (for legacy)
+    if (!dateStr.includes('-') && isNaN(Date.parse(dateStr + ", 2026"))) return dateStr;
+
+    // Try to parse it
+    const date = parseDate(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+}
+
+function parseDate(dateStr) {
+    if (!dateStr) return new Date();
+    if (dateStr.includes('-')) {
+        // Many browsers handle YYYY-MM-DD as UTC, we want local
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    }
+    const year = new Date().getFullYear();
+    return new Date(`${dateStr}, ${year}`);
 }
 
 function renderStudentResources() {
@@ -272,7 +298,7 @@ function renderAdminLists() {
             <div class="manage-item">
                 <div class="item-info">
                     <strong>${event.title}</strong>
-                    <div class="item-meta">${event.date} • ${capitalize(event.type)}</div>
+                    <div class="item-meta">${formatDateForDisplay(event.date)} • ${capitalize(event.type)}</div>
                     <span style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem;">${event.description}</span>
                 </div>
                 <div class="item-actions">
@@ -296,7 +322,7 @@ function updateTimelineHeader() {
     let nextEvent = null;
 
     appData.calendar.forEach(event => {
-        const eventDate = new Date(`${event.date}, ${currentYear}`);
+        const eventDate = parseDate(event.date);
         eventDate.setHours(0, 0, 0, 0);
 
         if (eventDate.getTime() === today.getTime()) {
@@ -401,7 +427,7 @@ function checkAdminLogin() {
 function togglePasswordVisibility() {
     const pwdInput = document.getElementById("admin-pwd");
     const icon = document.getElementById("pwd-toggle-icon");
-    
+
     if (pwdInput.type === "password") {
         pwdInput.type = "text";
         icon.setAttribute("data-lucide", "eye-off");
@@ -409,7 +435,7 @@ function togglePasswordVisibility() {
         pwdInput.type = "password";
         icon.setAttribute("data-lucide", "eye");
     }
-    
+
     if (window.lucide) {
         lucide.createIcons();
     }
@@ -418,7 +444,7 @@ function togglePasswordVisibility() {
 function showDashboard() {
     const modalContent = document.querySelector('.admin-modal-content');
     if (modalContent) modalContent.classList.remove('compact');
-    
+
     document.getElementById("admin-login-screen").style.display = "none";
     document.getElementById("admin-dashboard").style.display = "block";
     renderAdminLists();
@@ -660,11 +686,28 @@ window.deleteEvent = async function (id) {
 
 function getEventFields(data = {}) {
     const link = (data.links && data.links[0]) || {};
+
+    let dateValue = data.date || '';
+    // Normalize for date picker (must be YYYY-MM-DD)
+    if (dateValue && !/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        const d = parseDate(dateValue);
+        if (!isNaN(d.getTime())) {
+            // Format to YYYY-MM-DD for input
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            dateValue = `${y}-${m}-${day}`;
+        }
+    }
+
     return `
         <div class="grid-2" style="gap:1rem">
             <div class="form-group">
-                <label>Date (e.g. April 15)</label>
-                <input type="text" name="date" value="${data.date || ''}" class="form-control" required placeholder="April 15">
+                <label>Event Date</label>
+                <div class="date-input-wrapper" onclick="this.querySelector('input').showPicker()">
+                    <i data-lucide="calendar" class="date-input-icon"></i>
+                    <input type="date" name="date" value="${dateValue}" class="form-control" required>
+                </div>
             </div>
             <div class="form-group">
                 <label>Type</label>
