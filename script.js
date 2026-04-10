@@ -4,6 +4,19 @@ if ('scrollRestoration' in history) {
 }
 window.scrollTo(0, 0);
 
+// --- PRELOADER HANDLING ---
+window.addEventListener('load', () => {
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+        // Wait for fonts to be ready too
+        document.fonts.ready.then(() => {
+            setTimeout(() => {
+                preloader.classList.add('fade-out');
+            }, 600); // Small extra buffer for smoothness
+        });
+    }
+});
+
 // Initialize Lucide Icons
 lucide.createIcons();
 
@@ -247,7 +260,6 @@ function renderAdminLists() {
                 </div>
                 <div class="item-actions">
                     <button class="icon-btn" onclick="editResource(${res.id})"><i data-lucide="edit-3"></i></button>
-                    <button class="icon-btn danger" onclick="deleteResource(${res.id})"><i data-lucide="trash-2"></i></button>
                 </div>
             </div>
         `).join('');
@@ -338,7 +350,16 @@ function openAdmin() {
     document.getElementById("admin-modal").classList.add("show");
     document.body.classList.add("modal-open");
     document.getElementById("admin-pwd").value = '';
+    document.getElementById("admin-pwd").type = 'password';
     document.getElementById("admin-error").style.display = "none";
+    const icon = document.getElementById("pwd-toggle-icon");
+    if (icon) {
+        icon.setAttribute("data-lucide", "eye");
+        if (window.lucide) lucide.createIcons();
+    }
+
+    const modalContent = document.querySelector('.admin-modal-content');
+    if (modalContent) modalContent.classList.add('compact');
 
     // Check if already logged in (simulated for session)
     if (sessionStorage.getItem('is_logged_in') === 'true') {
@@ -346,6 +367,11 @@ function openAdmin() {
     } else {
         document.getElementById("admin-login-screen").style.display = "block";
         document.getElementById("admin-dashboard").style.display = "none";
+        // Focus the password box
+        setTimeout(() => {
+            const pwdInput = document.getElementById("admin-pwd");
+            if (pwdInput) pwdInput.focus();
+        }, 300); // Small delay for modal animation
     }
 }
 
@@ -372,7 +398,27 @@ function checkAdminLogin() {
     }
 }
 
+function togglePasswordVisibility() {
+    const pwdInput = document.getElementById("admin-pwd");
+    const icon = document.getElementById("pwd-toggle-icon");
+    
+    if (pwdInput.type === "password") {
+        pwdInput.type = "text";
+        icon.setAttribute("data-lucide", "eye-off");
+    } else {
+        pwdInput.type = "password";
+        icon.setAttribute("data-lucide", "eye");
+    }
+    
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
 function showDashboard() {
+    const modalContent = document.querySelector('.admin-modal-content');
+    if (modalContent) modalContent.classList.remove('compact');
+    
     document.getElementById("admin-login-screen").style.display = "none";
     document.getElementById("admin-dashboard").style.display = "block";
     renderAdminLists();
@@ -651,10 +697,6 @@ function getEventFields(data = {}) {
 }
 
 // RESOURCES
-window.showAddResourceForm = function () {
-    currentEditType = 'resource';
-    openFormModal('Add Resource Card', getResourceFields());
-}
 
 window.editResource = function (id) {
     const res = appData.resources.find(r => r.id === id);
@@ -663,20 +705,9 @@ window.editResource = function (id) {
     openFormModal('Edit Resource Card', getResourceFields(res));
 }
 
-window.deleteResource = async function (id) {
-    if (confirm('Delete this resource category?')) {
-        try {
-            await supabaseClient.from('resources').delete().eq('id', id);
-            await loadDataAndSync();
-        } catch (err) {
-            console.error("Error deleting resource:", err);
-        }
-    }
-}
 
 function getResourceFields(data = {}) {
     const links = data.links || [];
-    const isEdit = !!data.id;
 
     let metaHtml = `
         <div class="form-group">
@@ -687,23 +718,8 @@ function getResourceFields(data = {}) {
             <label>Description</label>
             <input type="text" name="description" value="${data.description || ''}" class="form-control" required>
         </div>
-        <div class="form-group" style="margin-top:1rem">
-            <label>Icon (Lucide name)</label>
-            <input type="text" name="icon" value="${data.icon || 'link'}" class="form-control" placeholder="users, monitor, file-text...">
-        </div>
+        <input type="hidden" name="icon" value="${data.icon || 'link'}">
     `;
-
-    if (isEdit) {
-        metaHtml = `
-            <div style="background: #f1f5f9; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
-                <div style="font-weight: 800; color: var(--primary); font-family: var(--font-heading);">${data.title}</div>
-                <div style="font-size: 0.85rem; color: var(--text-muted);">${data.description}</div>
-            </div>
-            <input type="hidden" name="title" value="${data.title}">
-            <input type="hidden" name="description" value="${data.description}">
-            <input type="hidden" name="icon" value="${data.icon}">
-        `;
-    }
 
     const linksHtml = links.map((link, i) => getLinkRowHtml(link.name, link.url)).join('');
 

@@ -22,6 +22,68 @@
     --font-body: 'Inter', sans-serif;
 }
 
+/* Preloader */
+#preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+#preloader.fade-out {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.loader-icon {
+    width: 64px;
+    height: 64px;
+    color: var(--primary);
+    animation: rotate 2s linear infinite;
+}
+
+.loader-bar {
+    width: 120px;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+}
+
+.loader-bar::after {
+    content: '';
+    position: absolute;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--primary);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes loading {
+    to { left: 100%; }
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -74,7 +136,7 @@ body.modal-open {
     align-items: center;
     justify-content: center;
     padding: 0.75rem 1.5rem;
-    border-radius: 6px;
+    border-radius: 12px;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.2s ease;
@@ -680,17 +742,18 @@ body.modal-open {
     width: 90%;
     max-width: 800px;
     padding: 3rem;
-    border-radius: 12px;
+    border-radius: 24px;
     position: relative;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     max-height: 90vh;
     overflow-y: auto;
     overscroll-behavior: contain;
-    
+
     /* Hide scrollbar for Chrome/Safari */
     &::-webkit-scrollbar {
         display: none;
     }
+
     /* Hide scrollbar for IE/Edge/Firefox */
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -698,7 +761,12 @@ body.modal-open {
     /* Child animation base */
     opacity: 0;
     transform: translateY(10px);
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    transition: opacity 0.2s ease-out,
+    transform 0.2s ease-out;
+}
+
+.modal-content.compact {
+    max-width: 500px;
 }
 
 .modal.show .modal-content {
@@ -732,7 +800,7 @@ body.modal-open {
     width: 100%;
     padding: 0.75rem 1rem;
     border: 2px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 12px;
     font-size: 1rem;
     font-family: var(--font-body);
     transition: border-color 0.2s;
@@ -741,6 +809,30 @@ body.modal-open {
 .form-control:focus {
     outline: none;
     border-color: var(--primary);
+}
+
+.password-toggle-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.toggle-password-btn:hover {
+    color: var(--primary);
 }
 
 .dashboard-grid {
@@ -937,8 +1029,15 @@ body.modal-open {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .section-manage-header {
@@ -1043,7 +1142,8 @@ body.modal-open {
 
 /* Form Styles */
 .form-modal-content {
-    max-width: 900px; /* Match dashboard width for consistency */
+    max-width: 550px;
+    width: 85%;
 }
 
 #admin-dashboard {
@@ -1082,13 +1182,13 @@ hr {
         white-space: nowrap;
         padding-bottom: 5px;
     }
-    
+
     .manage-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
-    
+
     .item-actions {
         width: 100%;
         justify-content: flex-end;
