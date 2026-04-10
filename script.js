@@ -1,0 +1,664 @@
+// Force page to load at the top
+if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
+
+// Initialize Lucide Icons
+lucide.createIcons();
+
+// --- DATA SYSTEM ---
+
+const DEFAULT_DATA = {
+    calendar: [
+        { id: 1, date: "March 6", title: "First Meeting", description: "The science field club launched successfully with our introductory meeting!", type: "meeting" },
+        { id: 2, date: "March 13", title: "OMSI Prep Meeting", description: "We reviewed our goals and prepared for the Trip Teams roles at OMSI.", type: "meeting" },
+        { id: 3, date: "March 20", title: "OMSI Deadline", description: "Permission slips and payments were due for the OMSI trip.", type: "deadline" },
+        { id: 4, date: "April 3", title: "OMSI Trip", description: "We had an amazing trip to the Oregon Museum of Science and Industry.", type: "trip", links: [{ name: "VIEW OMSI SLIDES", url: "https://docs.google.com/presentation/d/1hOb-dfVeICpN3nH9uDsAseyEgZs8CTmS5dgkLcA0sn8/edit?usp=sharing" }] },
+        { id: 5, date: "April 9", title: "OMSI Review & Zoo Prep", description: "Reviewing our OMSI findings and going over details for the upcoming Oregon Zoo trip.", type: "meeting" },
+        { id: 6, date: "April 14", title: "Oregon Zoo Deadline", description: "Permission slip and $13 fee are due to Deanna Lowe!", type: "deadline", links: [{ name: "PERMISSION SLIP", url: "https://docs.google.com/document/d/1siziM1CW5AM2ErR5PTPls2JXVZ1HWuki/edit?usp=sharing" }] },
+        { id: 7, date: "April 29", title: "Oregon Zoo Trip", description: "Get ready for our zoo trip! Departure is at 9:30 AM.", type: "trip" },
+        { id: 8, date: "May 5", title: "Zoo Review & Topgolf Prep", description: "Reviewing what we learned at the Zoo and preparing for the physics of Topgolf.", type: "meeting" },
+        { id: 9, date: "May 11", title: "Topgolf Deadline", description: "Permission slip and $12 fee are due!", type: "deadline", links: [{ name: "PERMISSION SLIP", url: "https://docs.google.com/document/d/1fztRUHK0FGga5l6RD6i6Z7IjZDycQoM5/edit?usp=sharing" }] },
+        { id: 10, date: "May 19", title: "Topgolf Trip", description: "Time to experience the physics of golf! Let's hit the range.", type: "trip" },
+        { id: 11, date: "May 22", title: "Topgolf Review & Final Meeting", description: "Our final meeting to wrap up the year. Present your group slides!", type: "meeting" }
+    ],
+    resources: [
+        {
+            id: 1,
+            title: "Club Member List",
+            description: "Current roster of all Science Field Club members.",
+            icon: "users",
+            links: [{ name: "View Roster", url: "https://docs.google.com/spreadsheets/d/1zW3jt0BTC-vJHBtmn07ziwwamYmfXPxmkOSA_oIOhTA/edit?usp=sharing" }]
+        },
+        {
+            id: 2,
+            title: "Trip Team Slides",
+            description: "View the presentations put together by our Trip Teams!",
+            icon: "monitor",
+            links: [{ name: "OMSI Slides", url: "https://docs.google.com/presentation/d/1hOb-dfVeICpN3nH9uDsAseyEgZs8CTmS5dgkLcA0sn8/edit?usp=sharing" }]
+        },
+        {
+            id: 3,
+            title: "Permission Forms",
+            description: "Quick access to all upcoming field trip permission slips.",
+            icon: "file-check-2",
+            links: [
+                { name: "Oregon Zoo Form", url: "https://docs.google.com/document/d/1siziM1CW5AM2ErR5PTPls2JXVZ1HWuki/edit?usp=sharing" },
+                { name: "Topgolf Form", url: "https://docs.google.com/document/d/1fztRUHK0FGga5l6RD6i6Z7IjZDycQoM5/edit?usp=sharing" },
+                { name: "OMSI Form", url: "https://docs.google.com/document/d/1MvUqUvjK4iwdIUYODilcxSaISkjasMLD/edit?usp=sharing" }
+            ]
+        }
+    ],
+    adminDocs: [
+        { id: 1, name: "25/26 Member List (w/ Contact Info)", url: "https://docs.google.com/spreadsheets/d/1IVa2kDnZgd3FvAihiq3o_8HXEQHX8zNF1kk8WS2AfGI/edit?usp=sharing" },
+        { id: 2, name: "25/26 Zoo Eligibility", url: "https://docs.google.com/spreadsheets/d/1V8GmkQCR9dK3hicUBojXClzEYr6iY4GZRPq3CYz2cS4/edit?gid=0" },
+        { id: 3, name: "25/26 OMSI Eligibility", url: "https://docs.google.com/spreadsheets/d/1x4nYfHSyEVncc-Pl9QeI8Ub6Vk3gn52krrNkFbp7rMo/edit?gid=0" },
+        { id: 4, name: "25/26 Topgolf Eligibility", url: "https://docs.google.com/spreadsheets/d/1YcUw8coFzPFLBy7r7p3QSIaONOyrNsvKdI9gtTszOyQ/edit?usp=sharing" },
+        { id: 5, name: "Expenses Tracking", url: "https://docs.google.com/spreadsheets/d/1jhIEYxW09a9kDlt2S4PrBPAP2hH7jAmQuL34EnmutGw/edit?usp=sharing" },
+        { id: 6, name: "Interest Form", url: "https://docs.google.com/spreadsheets/d/1V0ejIHqxnYef7ZuEUBtLGhOsGIRugQqofQxuG4O_Hto/edit?usp=sharing" },
+        { id: 7, name: "First Meeting Presentation", url: "https://docs.google.com/presentation/d/12s84I5A0ZbOhKiAsgYjnBPCSwG3t_KbAwZck4Lv3Uts/edit?usp=sharing" },
+        { id: 8, name: "Interest Meeting Presentation", url: "https://docs.google.com/presentation/d/13x1XAR4pWUyfpC36oilV68Znv3xxHawhGjjU99IzLYU/edit?usp=sharing" }
+    ]
+};
+
+let appData = JSON.parse(localStorage.getItem('sf_club_data')) || DEFAULT_DATA;
+
+function saveData() {
+    localStorage.setItem('sf_club_data', JSON.stringify(appData));
+    renderAll();
+}
+
+// --- RENDERING ---
+
+function renderAll() {
+    renderTimeline();
+    renderStudentResources();
+    renderAdminLists();
+    updateTimelineHeader();
+    if (window.lucide) lucide.createIcons();
+}
+
+function renderTimeline() {
+    const container = document.getElementById('timeline-container');
+    if (!container) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const currentYear = today.getFullYear();
+
+    container.innerHTML = appData.calendar.map(event => {
+        const eventDate = new Date(`${event.date}, ${currentYear}`);
+        eventDate.setHours(0, 0, 0, 0);
+        const isPast = eventDate < today;
+
+        let tagClass = 'tag-info';
+        let tagText = event.type || 'Meeting';
+        if (isPast) {
+            tagClass = 'tag-muted';
+            tagText = 'Completed';
+        } else if (event.type === 'deadline') {
+            tagClass = 'tag-warning';
+            tagText = 'Deadline';
+        } else if (event.type === 'trip') {
+            tagClass = 'tag-success';
+            tagText = 'Field Trip';
+        } else {
+            tagText = capitalize(event.type || 'Meeting');
+        }
+
+        const linksHtml = (event.links || []).map(link =>
+            `<a href="${link.url}" target="_blank" class="read-more">${link.name.toUpperCase()} ▸</a>`
+        ).join('');
+
+        return `
+            <div class="timeline-item ${isPast ? 'past-event' : ''}">
+                <div class="timeline-date">${event.date}</div>
+                <div class="timeline-content card-beige ${!isPast && eventDate.getTime() === today.getTime() ? 'highlight-content' : ''}">
+                    <div class="event-tag ${tagClass}">${tagText}</div>
+                    <h3>${event.title}</h3>
+                    <p>${event.description}</p>
+                    ${linksHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderStudentResources() {
+    const container = document.getElementById('resources-container');
+    if (!container) return;
+
+    container.innerHTML = appData.resources.map(res => {
+        const linksHtml = (res.links || []).map(link =>
+            `<a href="${link.url}" target="_blank">${link.name}</a>`
+        ).join('');
+
+        return `
+            <div class="resource-card card card-white">
+                <i data-lucide="${res.icon || 'link'}" class="resource-icon"></i>
+                <h4>${res.title}</h4>
+                <p>${res.description}</p>
+                <div class="resource-links">
+                    ${linksHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderAdminLists() {
+    // Admin Docs List
+    const docsList = document.getElementById('admin-docs-list');
+    if (docsList) {
+        docsList.innerHTML = appData.adminDocs.map(doc => `
+            <div class="manage-item">
+                <div class="item-info">
+                    <strong>${doc.name}</strong>
+                    <span>${doc.url}</span>
+                </div>
+                <div class="item-actions">
+                    <button class="icon-btn" onclick="editDoc(${doc.id})"><i data-lucide="edit-3"></i></button>
+                    <button class="icon-btn danger" onclick="deleteDoc(${doc.id})"><i data-lucide="trash-2"></i></button>
+                    <a href="${doc.url}" target="_blank" class="icon-btn"><i data-lucide="external-link"></i></a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Admin Resources List
+    const resourceList = document.getElementById('admin-resources-list');
+    if (resourceList) {
+        resourceList.innerHTML = appData.resources.map(res => `
+            <div class="manage-item card-item">
+                <div class="item-info">
+                    <strong style="color: var(--primary);">${res.title}</strong>
+                    <span style="font-size: 0.85rem; opacity: 0.8;">${res.description}</span>
+                </div>
+                <div class="item-actions">
+                    <button class="icon-btn" onclick="editResource(${res.id})"><i data-lucide="edit-3"></i></button>
+                    <button class="icon-btn danger" onclick="deleteResource(${res.id})"><i data-lucide="trash-2"></i></button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Admin Calendar List
+    const calList = document.getElementById('admin-calendar-list');
+    if (calList) {
+        calList.innerHTML = appData.calendar.map(event => `
+            <div class="manage-item">
+                <div class="item-info">
+                    <strong>${event.title}</strong>
+                    <div class="item-meta">${event.date} • ${capitalize(event.type)}</div>
+                    <span style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem;">${event.description}</span>
+                </div>
+                <div class="item-actions">
+                    <button class="icon-btn" onclick="editEvent(${event.id})"><i data-lucide="edit-3"></i></button>
+                    <button class="icon-btn danger" onclick="deleteEvent(${event.id})"><i data-lucide="trash-2"></i></button>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+function updateTimelineHeader() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const currentYear = today.getFullYear();
+
+    let todaysEvents = [];
+    let tomorrowsEvents = [];
+    let nextEvent = null;
+
+    appData.calendar.forEach(event => {
+        const eventDate = new Date(`${event.date}, ${currentYear}`);
+        eventDate.setHours(0, 0, 0, 0);
+
+        if (eventDate.getTime() === today.getTime()) {
+            todaysEvents.push(event.title);
+        } else if (eventDate.getTime() === tomorrow.getTime()) {
+            tomorrowsEvents.push(event.title);
+        } else if (eventDate > today && !nextEvent) {
+            nextEvent = event;
+        }
+    });
+
+    let bannerMsg = "";
+    if (todaysEvents.length > 0) {
+        bannerMsg = `<strong>Event Today:</strong> Don't forget about the <strong>${todaysEvents.join(' & ')}</strong>!`;
+    } else if (tomorrowsEvents.length > 0) {
+        bannerMsg = `<strong>Event Tomorrow:</strong> Get ready for the <strong>${tomorrowsEvents.join(' & ')}</strong>!`;
+    } else if (nextEvent) {
+        bannerMsg = `<strong>Next Event:</strong> ${nextEvent.date} - ${nextEvent.title}`;
+    }
+
+    if (bannerMsg) {
+        const topBarContainer = document.querySelector('.top-bar .container');
+        if (topBarContainer) {
+            topBarContainer.innerHTML = `<span><i data-lucide="bell" style="width: 16px; height: 16px; margin-right: 6px; position: relative; top: 3px; display: inline-block;"></i> ${bannerMsg}</span>`;
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+}
+
+// --- UI LOGIC ---
+
+// Mobile menu toggle
+const mobileBtn = document.querySelector('.mobile-menu-btn');
+const navLinks = document.querySelector('.nav-links');
+
+if (mobileBtn) {
+    mobileBtn.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+    });
+}
+
+// Close mobile menu when a link is clicked
+document.querySelectorAll('.nav-links a').forEach(link => {
+    link.addEventListener('click', () => {
+        navLinks.classList.remove('active');
+    });
+});
+
+// Admin Modal Logic
+function openAdmin() {
+    document.getElementById("admin-modal").classList.add("show");
+    document.body.classList.add("modal-open");
+    document.getElementById("admin-pwd").value = '';
+    document.getElementById("admin-error").style.display = "none";
+
+    // Check if already logged in (simulated for session)
+    if (sessionStorage.getItem('is_logged_in') === 'true') {
+        showDashboard();
+    } else {
+        document.getElementById("admin-login-screen").style.display = "block";
+        document.getElementById("admin-dashboard").style.display = "none";
+    }
+}
+
+function closeAdmin() {
+    document.getElementById("admin-modal").classList.remove("show");
+    document.body.classList.remove("modal-open");
+}
+
+function handleLoginKey(event) {
+    if (event.key === "Enter") {
+        checkAdminLogin();
+    }
+}
+
+function checkAdminLogin() {
+    const pwdInput = document.getElementById("admin-pwd").value;
+    const errorMsg = document.getElementById("admin-error");
+
+    if (pwdInput === "SenorIsCool5") {
+        sessionStorage.setItem('is_logged_in', 'true');
+        showDashboard();
+    } else {
+        errorMsg.style.display = "block";
+    }
+}
+
+function showDashboard() {
+    document.getElementById("admin-login-screen").style.display = "none";
+    document.getElementById("admin-dashboard").style.display = "block";
+    renderAdminLists();
+    if (window.lucide) lucide.createIcons();
+}
+
+function logoutAdmin() {
+    sessionStorage.removeItem('is_logged_in');
+    document.getElementById("admin-login-screen").style.display = "block";
+    document.getElementById("admin-dashboard").style.display = "none";
+}
+
+window.switchTab = function (tabId) {
+    const modalContent = document.querySelector('.admin-modal-content');
+    const dashboard = document.getElementById('admin-dashboard');
+    if (!modalContent || !dashboard) return;
+
+    // Capture current modal height
+    const oldHeight = modalContent.offsetHeight;
+    modalContent.style.transition = 'none';
+    modalContent.style.height = oldHeight + 'px';
+    modalContent.style.overflow = 'hidden';
+
+    // Update buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('onclick').includes(tabId));
+    });
+
+    // Update content visibility
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.toggle('show', content.id === tabId);
+    });
+
+    // Force icon generation so new height is accurate
+    if (window.lucide) lucide.createIcons();
+
+    // Use two frames to ensure the collapse/growth is captured
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            // Measure the NEW height required by the modal-content
+            // We set height to auto briefly to measure, then back
+            modalContent.style.height = 'auto';
+            const newHeight = modalContent.offsetHeight;
+            modalContent.style.height = oldHeight + 'px';
+
+            // Trigger reflow
+            void modalContent.offsetHeight;
+
+            // Animate
+            modalContent.style.transition = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            modalContent.style.height = newHeight + 'px';
+
+            // Cleanup after animation
+            setTimeout(() => {
+                modalContent.style.height = 'auto';
+                modalContent.style.overflow = 'auto'; // Restore scroll if needed
+            }, 450);
+        });
+    });
+}
+
+// Close modal if clicked outside of content
+window.onclick = function (event) {
+    const modal = document.getElementById('admin-modal');
+    const fModal = document.getElementById('form-modal');
+    if (event.target == modal) closeAdmin();
+    if (event.target == fModal) closeFormModal();
+}
+
+// Copy email
+function copyEmail(email, element) {
+    navigator.clipboard.writeText(email).then(() => {
+        const span = element.querySelector('span');
+        const originalText = span.innerText;
+        span.innerText = "Copied!";
+        element.style.color = "#16a34a";
+        setTimeout(() => {
+            span.innerText = originalText;
+            element.style.color = "";
+        }, 2000);
+    });
+}
+
+// --- FORM HANDLING ---
+
+let currentEditType = null;
+let currentEditId = null;
+
+function openFormModal(title, fields) {
+    document.getElementById('form-title').innerText = title;
+    document.getElementById('form-fields').innerHTML = fields;
+    document.getElementById('form-modal').classList.add('show');
+    document.body.classList.add('modal-open');
+    if (window.lucide) lucide.createIcons();
+}
+
+function closeFormModal() {
+    document.getElementById('form-modal').classList.remove('show');
+    // Only remove modal-open if the other modal isn't open
+    if (!document.getElementById('admin-modal').classList.contains('show')) {
+        document.body.classList.remove('modal-open');
+    }
+    currentEditId = null;
+    currentEditType = null;
+}
+
+window.handleFormSubmit = async function (e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        if (currentEditType === 'adminDoc') {
+            const doc = { name: data.name, url: data.url };
+            if (currentEditId) {
+                await supabaseClient.from('admin_docs').update(doc).eq('id', currentEditId);
+            } else {
+                await supabaseClient.from('admin_docs').insert(doc);
+            }
+        } else if (currentEditType === 'calendar') {
+            const links = [];
+            if (data.linkName && data.linkUrl) {
+                links.push({ name: data.linkName, url: data.linkUrl });
+            }
+            const event = {
+                date: data.date,
+                title: data.title,
+                description: data.description,
+                type: data.type,
+                links: links
+            };
+            if (currentEditId) {
+                await supabaseClient.from('calendar').update(event).eq('id', currentEditId);
+            } else {
+                await supabaseClient.from('calendar').insert(event);
+            }
+        } else if (currentEditType === 'resource') {
+            const linkNames = document.querySelectorAll('input[name="linkName[]"]');
+            const linkUrls = document.querySelectorAll('input[name="linkUrl[]"]');
+            const links = [];
+
+            for (let i = 0; i < linkNames.length; i++) {
+                if (linkNames[i].value && linkUrls[i].value) {
+                    links.push({ name: linkNames[i].value, url: linkUrls[i].value });
+                }
+            }
+
+            if (currentEditId) {
+                await supabaseClient.from('resources').update({ links }).eq('id', currentEditId);
+            }
+        }
+
+        await loadDataAndSync();
+        closeFormModal();
+    } catch (err) {
+        console.error("Error saving to Supabase:", err);
+        alert("Failed to save changes. Please try again.");
+    }
+}
+
+// DOCS
+window.showAddDocForm = function () {
+    currentEditType = 'adminDoc';
+    openFormModal('Add Internal Document', `
+        <div class="form-group">
+            <label>Link Name</label>
+            <input type="text" name="name" class="form-control" required placeholder="e.g. 25/26 Member List">
+        </div>
+        <div class="form-group" style="margin-top:1rem">
+            <label>Google Drive / Sheet URL</label>
+            <input type="url" name="url" class="form-control" required placeholder="https://docs.google.com/...">
+        </div>
+    `);
+}
+
+window.editDoc = function (id) {
+    const doc = appData.adminDocs.find(d => d.id === id);
+    currentEditType = 'adminDoc';
+    currentEditId = id;
+    openFormModal('Edit Internal Link', `
+        <div class="form-group">
+            <label>Link Name</label>
+            <input type="text" name="name" value="${doc.name}" class="form-control" required>
+        </div>
+        <div class="form-group" style="margin-top:1rem">
+            <label>URL</label>
+            <input type="url" name="url" value="${doc.url}" class="form-control" required>
+        </div>
+    `);
+}
+
+window.deleteDoc = async function (id) {
+    if (confirm('Are you sure you want to remove this link?')) {
+        try {
+            await supabaseClient.from('admin_docs').delete().eq('id', id);
+            await loadDataAndSync();
+        } catch (err) {
+            console.error("Error deleting doc:", err);
+        }
+    }
+}
+
+// CALENDAR
+window.showAddEventForm = function () {
+    currentEditType = 'calendar';
+    openFormModal('Add Calendar Event', getEventFields());
+}
+
+window.editEvent = function (id) {
+    const event = appData.calendar.find(e => e.id === id);
+    currentEditType = 'calendar';
+    currentEditId = id;
+    openFormModal('Edit Event', getEventFields(event));
+}
+
+window.deleteEvent = async function (id) {
+    if (confirm('Remove this event?')) {
+        try {
+            await supabaseClient.from('calendar').delete().eq('id', id);
+            await loadDataAndSync();
+        } catch (err) {
+            console.error("Error deleting event:", err);
+        }
+    }
+}
+
+function getEventFields(data = {}) {
+    const link = (data.links && data.links[0]) || {};
+    return `
+        <div class="grid-2" style="gap:1rem">
+            <div class="form-group">
+                <label>Date (e.g. April 15)</label>
+                <input type="text" name="date" value="${data.date || ''}" class="form-control" required placeholder="April 15">
+            </div>
+            <div class="form-group">
+                <label>Type</label>
+                <select name="type" class="form-control">
+                    <option value="meeting" ${data.type === 'meeting' ? 'selected' : ''}>Meeting</option>
+                    <option value="trip" ${data.type === 'trip' ? 'selected' : ''}>Field Trip</option>
+                    <option value="deadline" ${data.type === 'deadline' ? 'selected' : ''}>Deadline</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group" style="margin-top:1rem">
+            <label>Title</label>
+            <input type="text" name="title" value="${data.title || ''}" class="form-control" required placeholder="Event Title">
+        </div>
+        <div class="form-group" style="margin-top:1rem">
+            <label>Description</label>
+            <textarea name="description" class="form-control" rows="3" required>${data.description || ''}</textarea>
+        </div>
+        <div class="grid-2" style="gap:1rem; margin-top:1rem">
+            <div class="form-group">
+                <label>Link Name (Optional)</label>
+                <input type="text" name="linkName" value="${link.name || ''}" class="form-control" placeholder="PERMISSION SLIP">
+            </div>
+            <div class="form-group">
+                <label>Link URL (Optional)</label>
+                <input type="url" name="linkUrl" value="${link.url || ''}" class="form-control" placeholder="https://...">
+            </div>
+        </div>
+    `;
+}
+
+// RESOURCES
+window.showAddResourceForm = function () {
+    currentEditType = 'resource';
+    openFormModal('Add Resource Card', getResourceFields());
+}
+
+window.editResource = function (id) {
+    const res = appData.resources.find(r => r.id === id);
+    currentEditType = 'resource';
+    currentEditId = id;
+    openFormModal('Edit Resource Card', getResourceFields(res));
+}
+
+window.deleteResource = async function (id) {
+    if (confirm('Delete this resource category?')) {
+        try {
+            await supabaseClient.from('resources').delete().eq('id', id);
+            await loadDataAndSync();
+        } catch (err) {
+            console.error("Error deleting resource:", err);
+        }
+    }
+}
+
+function getResourceFields(data = {}) {
+    const links = data.links || [];
+    const isEdit = !!data.id;
+
+    let metaHtml = `
+        <div class="form-group">
+            <label>Card Title</label>
+            <input type="text" name="title" value="${data.title || ''}" class="form-control" required placeholder="e.g. Club Member List">
+        </div>
+        <div class="form-group" style="margin-top:1rem">
+            <label>Description</label>
+            <input type="text" name="description" value="${data.description || ''}" class="form-control" required>
+        </div>
+        <div class="form-group" style="margin-top:1rem">
+            <label>Icon (Lucide name)</label>
+            <input type="text" name="icon" value="${data.icon || 'link'}" class="form-control" placeholder="users, monitor, file-text...">
+        </div>
+    `;
+
+    if (isEdit) {
+        metaHtml = `
+            <div style="background: #f1f5f9; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
+                <div style="font-weight: 800; color: var(--primary); font-family: var(--font-heading);">${data.title}</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">${data.description}</div>
+            </div>
+            <input type="hidden" name="title" value="${data.title}">
+            <input type="hidden" name="description" value="${data.description}">
+            <input type="hidden" name="icon" value="${data.icon}">
+        `;
+    }
+
+    const linksHtml = links.map((link, i) => getLinkRowHtml(link.name, link.url)).join('');
+
+    return `
+        ${metaHtml}
+        <div class="section-manage-header" style="margin-top: 1rem;">
+            <label style="font-weight:700;">Links</label>
+            <button type="button" class="btn btn-sm btn-outline-navy" onclick="addLinkRow()"><i data-lucide="plus"></i> Add Link</button>
+        </div>
+        <div id="dynamic-links-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
+            ${linksHtml}
+            ${links.length === 0 ? getLinkRowHtml() : ''}
+        </div>
+    `;
+}
+
+function getLinkRowHtml(name = '', url = '') {
+    return `
+        <div class="link-row" style="display: flex; gap: 0.5rem; align-items: center; animation: fadeIn 0.3s ease-out;">
+            <input type="text" name="linkName[]" value="${name}" class="form-control" placeholder="Link Name" required style="flex: 1;">
+            <input type="url" name="linkUrl[]" value="${url}" class="form-control" placeholder="URL" required style="flex: 2;">
+            <button type="button" class="icon-btn danger" onclick="this.parentElement.remove()" style="width: 42px; height: 42px;"><i data-lucide="trash-2"></i></button>
+        </div>
+    `;
+}
+
+window.addLinkRow = function () {
+    const container = document.getElementById('dynamic-links-container');
+    const div = document.createElement('div');
+    div.innerHTML = getLinkRowHtml();
+    container.appendChild(div.firstElementChild);
+    if (window.lucide) lucide.createIcons();
+};
+
+function capitalize(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// Initial Render
+renderAll();

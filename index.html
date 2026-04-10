@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Science Field Club | Banks, Oregon</title>
+    <meta name="description" content="Sparking curiosity through hands-on field trips, teamwork, and exploration.">
+    <link rel="stylesheet" href="styles.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <!-- Top Alert Bar -->
+    <div class="top-bar">
+        <div class="container">
+            <span><strong>Next Event:</strong> April 9 - OMSI Review & Zoo Prep Meeting</span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i data-lucide="atom" class="logo-icon"></i>
+                <span class="logo-text">BHS Science<br class="mobile-break"> Field Club</span>
+            </div>
+            <div class="nav-right">
+                <div class="nav-links">
+                    <a href="#about">About</a>
+                    <a href="#events">Updates & Events</a>
+                    <a href="#resources">Student Resources</a>
+                    <a href="#trip-teams">Trip Teams</a>
+                    <a href="#officers">Officers</a>
+                    <a href="#" onclick="openAdmin(); event.preventDefault();" class="mobile-login-link">Officer Login
+                        <i data-lucide="lock" style="width: 14px; height: 14px; margin-left: 4px;"></i></a>
+                </div>
+                <div class="nav-actions">
+                    <button class="btn btn-outline-navy" onclick="openAdmin()"
+                        style="font-family: var(--font-heading);"><i data-lucide="lock"
+                            style="width: 14px; height: 14px; margin-right: 4px;"></i> Officer Login</button>
+                    <button class="mobile-menu-btn"><i data-lucide="menu"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="badge">Banks, Oregon</div>
+                <h1 class="hero-title">Experience Science in the <span class="text-navy">Real World.</span></h1>
+                <p class="hero-subtitle">Sparking curiosity through hands-on field trips, teamwork, and exploration.
+                    Discover your passion outside the classroom.</p>
+                <div class="hero-actions">
+                    <a href="#events" class="btn btn-navy">Upcoming Trips</a>
+                    <a href="#resources" class="btn btn-outline-navy">View Resources</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- About Section -->
+    <section id="about" class="section bg-alt">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Mission</h2>
+            </div>
+            <div class="grid-2">
+                <div class="card card-white">
+                    <div class="card-icon"><i data-lucide="microscope"></i></div>
+                    <h3>Why We Exist</h3>
+                    <p>Our school is small and rural, and students rarely get science-focused field trips. STEM students
+                        rarely get access to labs, research centers, wildlife programs, or tech companies. This club
+                        gives students real-world experiences they wouldn’t get otherwise.</p>
+                </div>
+                <div class="card card-white">
+                    <div class="card-icon"><i data-lucide="users"></i></div>
+                    <h3>Building Skills</h3>
+                    <p>We focus on building leadership, planning, teamwork, and communication skills that matter for
+                        high school, college, and life. It creates a fun and meaningful way for students to explore
+                        science outside the classroom.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Events & Due Dates Section -->
+    <section id="events" class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2>News & Announcements</h2>
+                <p class="section-desc">Keep track of meetings, field trips, and form deadlines.
+                    <br><strong>Reminder:</strong> Club meetings are held in <strong>Mr. Richeson's Room</strong> after
+                    school!
+                </p>
+            </div>
+
+            <div class="alert-box">
+                <i data-lucide="alert-circle" class="alert-icon"></i>
+                <div class="alert-content">
+                    <strong>Important Note on Fees:</strong> Please give all fees to <b>Deanna Lowe</b> at the office.
+                    Make sure to tell her your name and which field trip it is for!
+                </div>
+            </div>
+
+            <div id="timeline-container" class="timeline">
+                <!-- Populated by JS -->
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Student Resources Section -->
+    <section id="resources" class="section bg-alt">
+        <div class="container">
+            <div class="section-header">
+                <h2>Student Resources</h2>
+                <p class="section-desc">Access public documents, member lists, and permission forms below.</p>
+            </div>
+
+            <div id="resources-container" class="grid-3">
+                <!-- Populated by JS -->
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Trip Teams Section -->
+    <section id="trip-teams" class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Trip Teams</h2>
+                <p class="section-desc">We use Trip Teams to keep everyone engaged and learning. Roles are refreshed for
+                    every trip to keep things new.</p>
+            </div>
+
+            <div class="grid-3 mb-4">
+                <div class="card role-card card-white shadow-hover">
+                    <i data-lucide="notepad-text" class="role-icon"></i>
+                    <h4>Note Takers</h4>
+                    <p>Write down important facts, observations, and things the group learned.</p>
+                </div>
+                <div class="card role-card card-white shadow-hover">
+                    <i data-lucide="camera" class="role-icon"></i>
+                    <h4>Photographers</h4>
+                    <p>Take pictures of exhibits, equipment, wildlife, or demonstrations.</p>
+                </div>
+                <div class="card role-card card-white shadow-hover">
+                    <i data-lucide="monitor-play" class="role-icon"></i>
+                    <h4>Presentation Creators</h4>
+                    <p>Build a simple recap slide using the group’s notes and photos.</p>
+                </div>
+            </div>
+
+            <div class="instruction-box card-beige">
+                <div class="box-header">
+                    <i data-lucide="clapperboard"></i>
+                    <h3>How to Make a Trip Team Slide</h3>
+                </div>
+                <div class="steps-list">
+                    <div class="step">
+                        <div class="step-num">1</div>
+                        <div class="step-text">Click on one of the template images.</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">2</div>
+                        <div class="step-text">Click <strong>Replace Image</strong> and upload your team's amazing
+                            photos.</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">3</div>
+                        <div class="step-text">Add your group members' names at the top of the slide.</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">4</div>
+                        <div class="step-text">Where the template text is, put in the exciting details & facts about
+                            your trip!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Officers Section -->
+    <section id="officers" class="section bg-alt">
+        <div class="container">
+            <div class="section-header">
+                <h2>Leadership & Officers</h2>
+            </div>
+
+            <div class="grid-officers">
+                <!-- Noah -->
+                <div class="officer-card card-white shadow-hover">
+                    <img src="images/noah.jpg" alt="Noah Allori" class="officer-img"
+                        onerror="this.src='https://ui-avatars.com/api/?name=Noah+Allori&background=12284C&color=fff&size=128'">
+                    <div class="officer-info">
+                        <h4>Noah Allori</h4>
+                        <div class="officer-role">President & Founder</div>
+                        <a onclick="copyEmail('noaha2027@banks.k12.or.us', this)" class="officer-email"
+                            style="cursor: pointer;"><i data-lucide="mail"></i>
+                            <span>noaha2027@banks.k12.or.us</span></a>
+                    </div>
+                </div>
+                <!-- Finan -->
+                <div class="officer-card card-white shadow-hover">
+                    <img src="images/finan.jpg" alt="Finan Hailey" class="officer-img"
+                        onerror="this.src='https://ui-avatars.com/api/?name=Finan+Hailey&background=12284C&color=fff&size=128'">
+                    <div class="officer-info">
+                        <h4>Finan Hailey</h4>
+                        <div class="officer-role">Vice President</div>
+                        <a onclick="copyEmail('finanh2028@banks.k12.or.us', this)" class="officer-email"
+                            style="cursor: pointer;"><i data-lucide="mail"></i>
+                            <span>finanh2028@banks.k12.or.us</span></a>
+                    </div>
+                </div>
+                <!-- Cassidy -->
+                <div class="officer-card card-white shadow-hover">
+                    <img src="images/cassidy.jpg" alt="Cassidy Acardi" class="officer-img"
+                        onerror="this.src='https://ui-avatars.com/api/?name=Cassidy+Acardi&background=12284C&color=fff&size=128'">
+                    <div class="officer-info">
+                        <h4>Cassidy Acardi</h4>
+                        <div class="officer-role">Secretary</div>
+                        <a onclick="copyEmail('cassidya2027@banks.k12.or.us', this)" class="officer-email"
+                            style="cursor: pointer;"><i data-lucide="mail"></i>
+                            <span>cassidya2027@banks.k12.or.us</span></a>
+                    </div>
+                </div>
+                <!-- Jane -->
+                <div class="officer-card card-white shadow-hover">
+                    <img src="images/jane.jpg" alt="Jane Bollmeier" class="officer-img"
+                        onerror="this.src='https://ui-avatars.com/api/?name=Jane+Bollmeier&background=12284C&color=fff&size=128'">
+                    <div class="officer-info">
+                        <h4>Jane Bollmeier</h4>
+                        <div class="officer-role">Fundraising Coordinator</div>
+                        <a onclick="copyEmail('janeb2027@banks.k12.or.us', this)" class="officer-email"
+                            style="cursor: pointer;"><i data-lucide="mail"></i>
+                            <span>janeb2027@banks.k12.or.us</span></a>
+                    </div>
+                </div>
+                <!-- Dylan -->
+                <div class="officer-card card-white shadow-hover">
+                    <img src="images/dylan.jpg" alt="Dylan McDonald" class="officer-img"
+                        onerror="this.src='https://ui-avatars.com/api/?name=Dylan+McDonald&background=12284C&color=fff&size=128'">
+                    <div class="officer-info">
+                        <h4>Dylan McDonald</h4>
+                        <div class="officer-role">Treasurer</div>
+                        <a onclick="copyEmail('dylanm2027@banks.k12.or.us', this)" class="officer-email"
+                            style="cursor: pointer;"><i data-lucide="mail"></i>
+                            <span>dylanm2027@banks.k12.or.us</span></a>
+                    </div>
+                </div>
+                <!-- Mark -->
+                <div class="officer-card card-white shadow-hover">
+                    <img src="images/mark.jpg" alt="Mark Anunsen" class="officer-img"
+                        onerror="this.src='https://ui-avatars.com/api/?name=Mark+Anunsen&background=12284C&color=fff&size=128'">
+                    <div class="officer-info">
+                        <h4>Mark Anunsen</h4>
+                        <div class="officer-role">Media Coordinator</div>
+                        <a onclick="copyEmail('marka2027@banks.k12.or.us', this)" class="officer-email"
+                            style="cursor: pointer;"><i data-lucide="mail"></i>
+                            <span>marka2027@banks.k12.or.us</span></a>
+                    </div>
+                </div>
+                <!-- Advisor -->
+                <div class="officer-card card-white shadow-hover advisor-card"
+                    style="grid-column: 1 / -1; max-width: 400px; margin: 1rem auto 0; border: 2px solid var(--primary);">
+                    <img src="images/richeson.webp" alt="Mr. Richeson" class="officer-img"
+                        onerror="this.src='https://ui-avatars.com/api/?name=Mr+Richeson&background=EADDca&color=12284C&size=128'">
+                    <div class="officer-info">
+                        <h4>Mr. Richeson</h4>
+                        <div class="officer-role">Faculty Advisor</div>
+                        <a onclick="copyEmail('tonyr@banks.k12.or.us', this)" class="officer-email"
+                            style="cursor: pointer;"><i data-lucide="mail"></i> <span>tonyr@banks.k12.or.us</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container" style="text-align: center;">
+            <i data-lucide="atom" style="width: 32px; height: 32px; color: var(--primary); margin-bottom: 1rem;"></i>
+            <h2 style="font-family: var(--font-heading); margin-bottom: 0.5rem; color: var(--text-heading);">Science
+                Field Club</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Banks, Oregon • 97106</p>
+        </div>
+    </footer>
+
+    <!-- Admin System Modal -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content admin-modal-content">
+            <button class="modal-close" onclick="closeAdmin()"><i data-lucide="x"></i></button>
+
+            <!-- Login Screen -->
+            <div id="admin-login-screen">
+                <i data-lucide="lock"
+                    style="width: 48px; height: 48px; color: var(--primary); margin: 0 auto 1rem; display: block;"></i>
+                <h2
+                    style="text-align: center; margin-bottom: 0.5rem; color: var(--text-heading); font-family: var(--font-heading);">
+                    Officer Access</h2>
+                <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Please enter the
+                    designated password to access internal slides and sheets.</p>
+
+                <div class="form-group" style="max-width: 300px; margin: 0 auto;">
+                    <input type="password" id="admin-pwd" placeholder="Enter password" class="form-control"
+                        onkeypress="handleLoginKey(event)">
+                    <div id="admin-error"
+                        style="color: #E53E3E; font-size: 0.9rem; margin-top: 0.5rem; display: none; text-align: center;">
+                        Incorrect password!</div>
+                    <button class="btn btn-navy"
+                        style="width: 100%; margin-top: 1rem; font-family: var(--font-heading);"
+                        onclick="checkAdminLogin()">Login to Dashboard</button>
+                </div>
+            </div>
+
+            <!-- Admin Dashboard -->
+            <div id="admin-dashboard" style="display: none;">
+                <div class="dashboard-header">
+                    <h2 style="color: var(--text-heading); font-family: var(--font-heading);">Officer Dashboard</h2>
+                </div>
+
+                <!-- Dashboard Tabs -->
+                <div class="dashboard-tabs">
+                    <button class="tab-btn active" onclick="switchTab('tab-docs')"><i data-lucide="file-text"></i>
+                        Internal Docs</button>
+                    <button class="tab-btn" onclick="switchTab('tab-resources')"><i data-lucide="link"></i> Student
+                        Resources</button>
+                    <button class="tab-btn" onclick="switchTab('tab-calendar')"><i data-lucide="calendar"></i>
+                        Calendar</button>
+                </div>
+
+                <div class="tab-content show" id="tab-docs">
+                    <div class="section-manage-header">
+                        <h3>Internal Documents</h3>
+                        <button class="btn btn-sm btn-navy" onclick="showAddDocForm()"><i data-lucide="plus"></i> Add
+                            Link</button>
+                    </div>
+                    <div id="admin-docs-list" class="manage-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-resources">
+                    <div class="section-manage-header">
+                        <h3>Student Resource Cards</h3>
+                    </div>
+                    <div id="admin-resources-list" class="manage-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-calendar">
+                    <div class="section-manage-header">
+                        <h3>Event Calendar</h3>
+                        <button class="btn btn-sm btn-navy" onclick="showAddEventForm()"><i data-lucide="plus"></i> Add
+                            Event</button>
+                    </div>
+                    <div id="admin-calendar-list" class="manage-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Admin Form Modal -->
+    <div id="form-modal" class="modal">
+        <div class="modal-content form-modal-content">
+            <button class="modal-close" onclick="closeFormModal()"><i data-lucide="x"></i></button>
+            <h2 id="form-title" style="margin-bottom: 1.5rem; font-family: var(--font-heading); color: var(--primary);">
+                Add Item</h2>
+            <form id="admin-form" onsubmit="handleFormSubmit(event)">
+                <div id="form-fields">
+                    <!-- Populated dynamically -->
+                </div>
+                <div class="form-actions"
+                    style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline-navy" onclick="closeFormModal()">Cancel</button>
+                    <button type="submit" class="btn btn-navy">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
