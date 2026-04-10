@@ -7,6 +7,11 @@ window.scrollTo(0, 0);
 // Initialize Lucide Icons
 lucide.createIcons();
 
+// --- SUPABASE CONFIG ---
+const SUPABASE_URL = 'https://qhgmjekyyxerrjlkrogp.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoZ21qZWt5eXhlcnJqbGtyb2dwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NjgyOTUsImV4cCI6MjA5MTM0NDI5NX0.M2IejAthgbToG-c2nfCD78V47j2KGOcQvg0rmrpFFGc';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // --- DATA SYSTEM ---
 
 const DEFAULT_DATA = {
@@ -62,10 +67,68 @@ const DEFAULT_DATA = {
     ]
 };
 
-let appData = JSON.parse(localStorage.getItem('sf_club_data')) || DEFAULT_DATA;
+// INITIALIZE WITH LOCAL DATA IMMEDIATELY
+let appData = JSON.parse(localStorage.getItem('sf_club_data')) || JSON.parse(JSON.stringify(DEFAULT_DATA));
+
+async function loadDataAndSync() {
+    try {
+        const [cal, res, docs] = await Promise.all([
+            supabaseClient.from('calendar').select('*').order('id', { ascending: true }),
+            supabaseClient.from('resources').select('*').order('id', { ascending: true }),
+            supabaseClient.from('admin_docs').select('*').order('id', { ascending: true })
+        ]);
+
+        const hasCloudData = (cal.data?.length > 0 || res.data?.length > 0 || docs.data?.length > 0);
+
+        if (hasCloudData) {
+            // We use cloud data, but we de-duplicate and SORT it!
+            appData.calendar = deduplicate(cal.data || [], 'title').sort((a, b) => {
+                const year = new Date().getFullYear();
+                return new Date(`${a.date}, ${year}`) - new Date(`${b.date}, ${year}`);
+            });
+            appData.resources = deduplicate(res.data || [], 'title');
+            appData.adminDocs = deduplicate(docs.data || [], 'name');
+            
+            // Save our clean, sorted copy back to local storage
+            localStorage.setItem('sf_club_data', JSON.stringify(appData));
+        } else {
+            console.log("Cloud is empty. Migrating your local data to cloud...");
+            await migrateToCloud(appData);
+        }
+
+        renderAll();
+    } catch (err) {
+        console.warn("Supabase sync pending or failed. Using local data.");
+        renderAll();
+    }
+}
+
+function deduplicate(arr, key) {
+    const seen = new Set();
+    return arr.filter(item => {
+        const val = item[key] + (item.date || '');
+        if (seen.has(val)) return false;
+        seen.add(val);
+        return true;
+    });
+}
+
+async function migrateToCloud(data) {
+    const calToSeed = (data.calendar || []).map(({ id, ...rest }) => rest);
+    const resToSeed = (data.resources || []).map(({ id, ...rest }) => rest);
+    const docsToSeed = (data.adminDocs || []).map(({ id, ...rest }) => rest);
+
+    if (calToSeed.length > 0) await supabaseClient.from('calendar').insert(calToSeed);
+    if (resToSeed.length > 0) await supabaseClient.from('resources').insert(resToSeed);
+    if (docsToSeed.length > 0) await supabaseClient.from('admin_docs').insert(docsToSeed);
+}
+
+// Initial render
+renderAll();
+// Sync in background
+loadDataAndSync();
 
 function saveData() {
-    localStorage.setItem('sf_club_data', JSON.stringify(appData));
     renderAll();
 }
 
@@ -87,7 +150,14 @@ function renderTimeline() {
     today.setHours(0, 0, 0, 0);
     const currentYear = today.getFullYear();
 
-    container.innerHTML = appData.calendar.map(event => {
+    // Sort events by date before rendering
+    const sortedEvents = [...appData.calendar].sort((a, b) => {
+        const dateA = new Date(`${a.date}, ${currentYear}`);
+        const dateB = new Date(`${b.date}, ${currentYear}`);
+        return dateA - dateB;
+    });
+
+    container.innerHTML = sortedEvents.map(event => {
         const eventDate = new Date(`${event.date}, ${currentYear}`);
         eventDate.setHours(0, 0, 0, 0);
         const isPast = eventDate < today;
@@ -415,12 +485,15 @@ window.handleFormSubmit = async function (e) {
     const data = Object.fromEntries(formData.entries());
 
     try {
+        let error;
         if (currentEditType === 'adminDoc') {
             const doc = { name: data.name, url: data.url };
             if (currentEditId) {
-                await supabaseClient.from('admin_docs').update(doc).eq('id', currentEditId);
+                const res = await supabaseClient.from('admin_docs').update(doc).eq('id', currentEditId);
+                error = res.error;
             } else {
-                await supabaseClient.from('admin_docs').insert(doc);
+                const res = await supabaseClient.from('admin_docs').insert(doc);
+                error = res.error;
             }
         } else if (currentEditType === 'calendar') {
             const links = [];
@@ -435,9 +508,11 @@ window.handleFormSubmit = async function (e) {
                 links: links
             };
             if (currentEditId) {
-                await supabaseClient.from('calendar').update(event).eq('id', currentEditId);
+                const res = await supabaseClient.from('calendar').update(event).eq('id', currentEditId);
+                error = res.error;
             } else {
-                await supabaseClient.from('calendar').insert(event);
+                const res = await supabaseClient.from('calendar').insert(event);
+                error = res.error;
             }
         } else if (currentEditType === 'resource') {
             const linkNames = document.querySelectorAll('input[name="linkName[]"]');
@@ -450,16 +525,24 @@ window.handleFormSubmit = async function (e) {
                 }
             }
 
+            const resource = { title: data.title, description: data.description, icon: data.icon, links: links };
             if (currentEditId) {
-                await supabaseClient.from('resources').update({ links }).eq('id', currentEditId);
+                const res = await supabaseClient.from('resources').update(resource).eq('id', currentEditId);
+                error = res.error;
+            } else {
+                const res = await supabaseClient.from('resources').insert(resource);
+                error = res.error;
             }
         }
 
+        if (error) throw error;
+
         await loadDataAndSync();
         closeFormModal();
+        // Removed success alert as requested
     } catch (err) {
-        console.error("Error saving to Supabase:", err);
-        alert("Failed to save changes. Please try again.");
+        console.error("Supabase Error:", err);
+        alert("Failed to save: " + (err.message || "Unknown error"));
     }
 }
 
