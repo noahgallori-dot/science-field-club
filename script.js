@@ -363,26 +363,13 @@ function updateTimelineHeader() {
 // Mobile menu toggle
 const mobileBtn = document.querySelector('.mobile-menu-btn');
 const navLinks = document.querySelector('.nav-links');
-
-if (mobileBtn) {
-    mobileBtn.addEventListener('click', () => {
-        navLinks.classList.toggle('active');
-    });
-}
-
-// Close mobile menu when a link is clicked
-document.querySelectorAll('.nav-links a').forEach(link => {
-    link.addEventListener('click', () => {
-        navLinks.classList.remove('active');
-    });
-});
-
-// --- SCROLL EFFECTS ---
 const headerWrapper = document.querySelector('.sticky-header-wrapper');
 let isScrolled = false;
+let isNavigating = false;
+let navigationTimeout;
 
 function updateHeader() {
-    const shouldScroll = window.scrollY > 50;
+    const shouldScroll = isNavigating || window.scrollY > 50 || (navLinks && navLinks.classList.contains('active'));
     if (shouldScroll !== isScrolled) {
         isScrolled = shouldScroll;
         if (isScrolled) {
@@ -392,6 +379,32 @@ function updateHeader() {
         }
     }
 }
+
+if (mobileBtn) {
+    mobileBtn.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+        updateHeader();
+    });
+}
+
+// Close mobile menu when a link is clicked
+document.querySelectorAll('.nav-links a').forEach(link => {
+    link.addEventListener('click', () => {
+        navLinks.classList.remove('active');
+        
+        // Lock header in scrolled state during smooth scroll to prevent jumping
+        isNavigating = true;
+        updateHeader();
+        
+        clearTimeout(navigationTimeout);
+        navigationTimeout = setTimeout(() => {
+            isNavigating = false;
+            updateHeader();
+        }, 800);
+    });
+});
+
+// --- SCROLL EFFECTS ---
 
 window.addEventListener('scroll', () => {
     requestAnimationFrame(updateHeader);
