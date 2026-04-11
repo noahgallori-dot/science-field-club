@@ -353,6 +353,8 @@ body.modal-open {
     color: var(--primary);
     text-transform: uppercase;
     letter-spacing: -0.5px;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 .nav-right {
