@@ -275,7 +275,19 @@ body.modal-open {
     border-bottom: 1px solid rgba(18, 40, 76, 0.1);
     position: relative;
     z-index: 10;
+
+    /* Grid animation for height */
+    display: grid;
+    grid-template-rows: 1fr;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.top-bar>.container {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .sticky-header-wrapper.scrolled .top-bar {
@@ -464,6 +476,7 @@ body.modal-open {
 /* Sections Base */
 .section {
     padding: 5rem 0;
+    scroll-margin-top: 100px;
 }
 
 .bg-alt {
@@ -1110,16 +1123,16 @@ body.modal-open {
     }
 
     .sticky-header-wrapper.scrolled .navbar {
-        padding: 0.75rem 0; /* Minimal shrink for mobile to stay snappy */
+        padding: 0.75rem 0;
+        /* Minimal shrink for mobile to stay snappy */
     }
 
     .sticky-header-wrapper.scrolled .top-bar {
-        max-height: 0;
-        overflow: hidden;
-        border: none;
-        padding: 0;
+        grid-template-rows: 0fr;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-bottom-color: transparent;
         opacity: 0;
-        transition: all 0.3s ease;
     }
 
     .hero-title {
@@ -1244,7 +1257,7 @@ body.modal-open {
     background: #f8fafc;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    transition: all 0.2s;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
 .manage-item:hover {
@@ -1372,4 +1385,31 @@ hr {
         width: 100%;
         justify-content: flex-end;
     }
+}
+
+/* SortableJS drag and drop styles */
+.sortable-ghost {
+    opacity: 1 !important;
+    background: transparent !important;
+    border: 2px dashed #94a3b8 !important;
+    box-shadow: none !important;
+}
+
+.sortable-ghost * {
+    visibility: hidden;
+}
+
+.sortable-chosen {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    background: #ffffff;
+    z-index: 10;
+}
+
+.sortable-drag {
+    cursor: grabbing !important;
+}
+
+.drag-handle:active,
+.drag-handle:active * {
+    cursor: grabbing !important;
 }

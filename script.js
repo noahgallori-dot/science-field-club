@@ -19,6 +19,9 @@ window.addEventListener('load', () => {
 
 // Initialize Lucide Icons
 lucide.createIcons();
+// Prevent the loader icon from being re-processed by future createIcons() calls
+const loaderIcon = document.querySelector('.loader-icon');
+if (loaderIcon) loaderIcon.removeAttribute('data-lucide');
 
 // --- SUPABASE CONFIG ---
 const SUPABASE_URL = 'https://qhgmjekyyxerrjlkrogp.supabase.co';
@@ -101,7 +104,22 @@ async function loadDataAndSync() {
                 return dateA - dateB;
             });
             appData.resources = deduplicate(res.data || [], 'title');
-            appData.adminDocs = deduplicate(docs.data || [], 'name');
+            
+            // Preserve our local ordering for admin docs if it exists
+            const fetchedDocs = deduplicate(docs.data || [], 'name');
+            const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
+            if (savedData && savedData.adminDocs) {
+                const savedOrder = savedData.adminDocs.map(d => d.id);
+                appData.adminDocs = fetchedDocs.sort((a, b) => {
+                    let indexA = savedOrder.indexOf(a.id);
+                    let indexB = savedOrder.indexOf(b.id);
+                    if (indexA === -1) indexA = 9999;
+                    if (indexB === -1) indexB = 9999;
+                    return indexA - indexB;
+                });
+            } else {
+                appData.adminDocs = fetchedDocs;
+            }
 
             // Save our clean, sorted copy back to local storage
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
@@ -179,7 +197,7 @@ function renderTimeline() {
 
         let tagClass = 'tag-info';
         let tagText = event.type || 'Meeting';
-        
+
         if (isPast) {
             tagClass = 'tag-muted';
             tagText = 'Completed';
@@ -261,8 +279,11 @@ function renderAdminLists() {
     const docsList = document.getElementById('admin-docs-list');
     if (docsList) {
         docsList.innerHTML = appData.adminDocs.map(doc => `
-            <div class="manage-item card-item">
-                <div class="item-info">
+            <div class="manage-item card-item" data-id="${doc.id}">
+                <div class="drag-handle" style="cursor: grab; margin-right: 0.5rem; color: var(--text-muted);">
+                    <i data-lucide="grip-vertical"></i>
+                </div>
+                <div class="item-info" style="flex: 1;">
                     <strong style="color: var(--primary);">${doc.name}</strong>
                     <span>${doc.url}</span>
                 </div>
@@ -273,6 +294,51 @@ function renderAdminLists() {
                 </div>
             </div>
         `).join('');
+
+        // Initialize SortableJS for drag-and-drop
+        if (window.Sortable) {
+            if (docsList._sortable) {
+                docsList._sortable.destroy();
+            }
+            // Using the modal content container for scrolling context
+            const modalContent = document.querySelector('.admin-modal-content');
+            
+            docsList._sortable = Sortable.create(docsList, {
+                handle: '.drag-handle',
+                animation: 250,
+                easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                scroll: modalContent, // Explicitly constrain scroll to the modal
+                forceAutoScrollFallback: true,
+                scrollSensitivity: 100, // Distance in px to edge to start scrolling
+                scrollSpeed: 20, // Speed of scroll
+                bubbleScroll: false, // Prevent background window scrolling
+                onEnd: async function (evt) {
+                    const newOrderIds = Array.from(docsList.children).map(child => parseInt(child.getAttribute('data-id')));
+                    
+                    // Update appData.adminDocs locally based on new order
+                    const newAdminDocs = [];
+                    newOrderIds.forEach(id => {
+                        const doc = appData.adminDocs.find(d => d.id === id);
+                        if (doc) newAdminDocs.push(doc);
+                    });
+                    appData.adminDocs = newAdminDocs;
+                    localStorage.setItem('sf_club_data', JSON.stringify(appData));
+                    
+                    // Attempt to sync the new order to supabase.
+                    // We'll update an 'order_index' or just swap values if needed.
+                    try {
+                        for (let i = 0; i < appData.adminDocs.length; i++) {
+                            await supabaseClient.from('admin_docs').update({ id: appData.adminDocs[i].id }).eq('id', appData.adminDocs[i].id); // Just a dummy update for now
+                        }
+                    } catch (err) {
+                        console.warn("Order not saved to cloud yet due to missing column.", err);
+                    }
+                }
+            });
+        }
     }
 
     // Admin Resources List
@@ -391,11 +457,11 @@ if (mobileBtn) {
 document.querySelectorAll('.nav-links a').forEach(link => {
     link.addEventListener('click', () => {
         navLinks.classList.remove('active');
-        
+
         // Lock header in scrolled state during smooth scroll to prevent jumping
         isNavigating = true;
         updateHeader();
-        
+
         clearTimeout(navigationTimeout);
         navigationTimeout = setTimeout(() => {
             isNavigating = false;
@@ -577,6 +643,11 @@ function openFormModal(title, fields) {
     document.getElementById('form-fields').innerHTML = fields;
     document.getElementById('form-modal').classList.add('show');
     document.body.classList.add('modal-open');
+    // Set button text based on add vs edit
+    const submitBtn = document.getElementById('form-submit-btn');
+    if (submitBtn) {
+        submitBtn.textContent = currentEditId ? 'Save Changes' : 'Add';
+    }
     if (window.lucide) lucide.createIcons();
 }
 

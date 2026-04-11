@@ -48,7 +48,8 @@
                         <a href="#resources">Student Resources</a>
                         <a href="#trip-teams">Trip Teams</a>
                         <a href="#officers">Officers</a>
-                        <a href="#" onclick="openAdmin(); event.preventDefault();" class="mobile-login-link">Officer Login
+                        <a href="#" onclick="openAdmin(); event.preventDefault();" class="mobile-login-link">Officer
+                            Login
                             <i data-lucide="lock" style="width: 14px; height: 14px; margin-left: 4px;"></i></a>
                     </div>
                     <div class="nav-actions">
@@ -401,7 +402,7 @@
                 <div class="form-actions"
                     style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
                     <button type="button" class="btn btn-outline-navy" onclick="closeFormModal()">Cancel</button>
-                    <button type="submit" class="btn btn-navy">Save Changes</button>
+                    <button type="submit" id="form-submit-btn" class="btn btn-navy">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -409,6 +410,8 @@
 
     <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SortableJS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="script.js"></script>
 </body>
 
