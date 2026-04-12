@@ -95,22 +95,20 @@ async function loadDataAndSync() {
         const hasCloudData = (cal.data?.length > 0 || res.data?.length > 0 || docs.data?.length > 0);
 
         if (hasCloudData) {
-            // We use cloud data, but we de-duplicate and SORT it!
+            // Sort calendar by date
             appData.calendar = deduplicate(cal.data || [], 'title').sort((a, b) => {
-                const dateA = parseDate(a.date);
-                const dateB = parseDate(b.date);
-                return dateA - dateB;
+                return parseDate(a.date) - parseDate(b.date);
             });
+            
             appData.resources = deduplicate(res.data || [], 'title');
 
-            // Preserve our local ordering for admin docs if it exists
+            // Docs: We load them, but we keep our LOCAL order if we have one
             const fetchedDocs = deduplicate(docs.data || [], 'name');
             const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
-            if (savedData && savedData.adminDocs) {
-                const savedOrder = savedData.adminDocs.map(d => d.id);
+            if (savedData && savedData.adminDocsOrder) {
                 appData.adminDocs = fetchedDocs.sort((a, b) => {
-                    let indexA = savedOrder.indexOf(a.id);
-                    let indexB = savedOrder.indexOf(b.id);
+                    let indexA = savedData.adminDocsOrder.indexOf(a.id);
+                    let indexB = savedData.adminDocsOrder.indexOf(b.id);
                     if (indexA === -1) indexA = 9999;
                     if (indexB === -1) indexB = 9999;
                     return indexA - indexB;
@@ -119,17 +117,22 @@ async function loadDataAndSync() {
                 appData.adminDocs = fetchedDocs;
             }
 
-            // Save our clean, sorted copy back to local storage
-            appData.subscribers = subs?.data || [];
+            // Subscribers: Load from cloud if table exists, otherwise use local
+            if (!subs.error && subs.data) {
+                appData.subscribers = subs.data;
+            } else if (savedData && savedData.subscribers) {
+                appData.subscribers = savedData.subscribers;
+            }
+
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
         } else {
-            console.log("Cloud is empty. Migrating your local data to cloud...");
+            console.log("Cloud is empty. Migrating your local data...");
             await migrateToCloud(appData);
         }
 
         renderAll();
     } catch (err) {
-        console.warn("Supabase sync pending or failed. Using local data.");
+        console.warn("Supabase sync issue. Using local data fallback.");
         renderAll();
     }
 }
@@ -162,6 +165,24 @@ loadDataAndSync();
 function saveData() {
     renderAll();
 }
+
+// Check if user already signed up for text reminders
+function checkPreviousSignup() {
+    if (localStorage.getItem('sf_club_signed_up') === 'true') {
+        const formContainer = document.getElementById('text-reminder-form-container');
+        const successDiv = document.getElementById('text-reminder-success');
+        if (formContainer && successDiv) {
+            formContainer.style.display = 'none';
+            successDiv.style.display = 'flex';
+            successDiv.style.opacity = '1';
+            successDiv.style.transform = 'none';
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+// Run check on load
+document.addEventListener('DOMContentLoaded', checkPreviousSignup);
+window.addEventListener('load', checkPreviousSignup);
 
 // --- RENDERING ---
 
@@ -314,7 +335,7 @@ function renderAdminLists() {
                 scrollSensitivity: 100, // Distance in px to edge to start scrolling
                 scrollSpeed: 20, // Speed of scroll
                 bubbleScroll: false, // Prevent background window scrolling
-                onEnd: async function (evt) {
+                onEnd: function (evt) {
                     const newOrderIds = Array.from(docsList.children).map(child => parseInt(child.getAttribute('data-id')));
 
                     // Update appData.adminDocs locally based on new order
@@ -324,17 +345,12 @@ function renderAdminLists() {
                         if (doc) newAdminDocs.push(doc);
                     });
                     appData.adminDocs = newAdminDocs;
+                    
+                    // Save the ID order specifically to localStorage
+                    appData.adminDocsOrder = newOrderIds;
                     localStorage.setItem('sf_club_data', JSON.stringify(appData));
-
-                    // Attempt to sync the new order to supabase.
-                    // We'll update an 'order_index' or just swap values if needed.
-                    try {
-                        for (let i = 0; i < appData.adminDocs.length; i++) {
-                            await supabaseClient.from('admin_docs').update({ id: appData.adminDocs[i].id }).eq('id', appData.adminDocs[i].id); // Just a dummy update for now
-                        }
-                    } catch (err) {
-                        console.warn("Order not saved to cloud yet due to missing column.", err);
-                    }
+                    
+                    console.log("New order saved locally. (Cross-device sync requires an 'order_index' column in Supabase)");
                 }
             });
         }
@@ -378,13 +394,13 @@ function renderAdminLists() {
     const subsList = document.getElementById('admin-subscribers-list');
     if (subsList) {
         subsList.innerHTML = (appData.subscribers || []).map(sub => `
-            <div class="manage-item card-item" style="padding: 0.75rem 1rem;">
+            <div class="manage-item card-item" style="padding: 0.75rem 1rem;" data-id="${sub.id || sub.phone}">
                 <div class="item-info">
                     <strong style="color: var(--primary);">${sub.name}</strong>
                     <div style="font-family: monospace; font-size: 0.95rem; margin-top: 0.2rem;">${sub.phone}</div>
                 </div>
                 <div class="item-actions">
-                    <button class="icon-btn danger" onclick="deleteSubscriber(${sub.id || `'${sub.phone}'`})"><i data-lucide="trash-2"></i></button>
+                    <button class="icon-btn danger" onclick="deleteSubscriber(${sub.id ? sub.id : `'${sub.phone}'`})"><i data-lucide="trash-2"></i></button>
                 </div>
             </div>
         `).join('');
@@ -405,16 +421,29 @@ window.copyAllSubscribers = function() {
 window.deleteSubscriber = async function (idStr) {
     if (confirm('Remove this subscriber?')) {
         try {
+            // Optimistic UI: Remove from DOM immediately to prevent flash
+            const row = document.querySelector(`#admin-subscribers-list [data-id="${idStr}"]`);
+            if (row) {
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(20px)';
+                row.style.transition = 'all 0.3s ease';
+                setTimeout(() => row.remove(), 300);
+            }
+
             if (typeof idStr === 'number') {
                 await supabaseClient.from('subscribers').delete().eq('id', idStr);
             } else {
                 await supabaseClient.from('subscribers').delete().eq('phone', idStr);
             }
+
             appData.subscribers = appData.subscribers.filter(s => s.id !== idStr && s.phone !== idStr);
-            renderAdminLists();
-            await loadDataAndSync();
+            localStorage.setItem('sf_club_data', JSON.stringify(appData));
+            
+            // Sync in background without full re-render
+            loadDataAndSync(); 
         } catch (err) {
             console.error("Error deleting subscriber:", err);
+            renderAdminLists(); // Revert on failure
         }
     }
 }
@@ -998,6 +1027,8 @@ if (reminderForm) {
         
         try {
             await supabaseClient.from('subscribers').insert({ name: firstName, phone: phone });
+            // Save state to prevent multiple signups
+            localStorage.setItem('sf_club_signed_up', 'true');
         } catch(err) { console.warn("Supabase insert failed", err); }
         
         const formContainer = document.getElementById('text-reminder-form-container');

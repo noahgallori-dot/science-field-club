@@ -1424,6 +1424,34 @@ hr {
     border-top: 1px solid var(--border-color);
 }
 
+/* Reveal scrollbars ONLY in manage-lists */
+.manage-list {
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 1.25rem;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--primary) #eef2f6 !important;
+}
+
+.manage-list::-webkit-scrollbar {
+    display: block !important;
+    width: 6px;
+}
+
+.manage-list::-webkit-scrollbar-track {
+    background: #eef2f6;
+    border-radius: 10px;
+}
+
+.manage-list::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 10px;
+}
+
+.manage-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-hover);
+}
+
 .footer-condensed {
     display: flex;
     justify-content: space-between;
@@ -1565,7 +1593,7 @@ hr {
         gap: 1rem;
         text-align: center;
     }
-    
+
     .footer-links-condensed {
         justify-content: center;
     }
