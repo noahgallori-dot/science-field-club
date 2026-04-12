@@ -95,33 +95,50 @@ async function loadDataAndSync() {
         const hasCloudData = (cal.data?.length > 0 || res.data?.length > 0 || docs.data?.length > 0);
 
         if (hasCloudData) {
-            // Sort calendar by date
+            // 1. EXTRACT HIDDEN STATE (This allows cross-device sync without new tables)
+            const stateRow = docs.data?.find(d => d.name === '_INTERNAL_STATE_');
+            let cloudState = {};
+            if (stateRow) {
+                try { 
+                    // The "url" field is used as a JSON storage blob
+                    cloudState = JSON.parse(stateRow.url); 
+                } catch(e) { console.warn("State row corrupted", e); }
+            }
+
+            // 2. PROCESS CALENDAR
             appData.calendar = deduplicate(cal.data || [], 'title').sort((a, b) => {
                 return parseDate(a.date) - parseDate(b.date);
             });
             
+            // 3. PROCESS RESOURCES
             appData.resources = deduplicate(res.data || [], 'title');
 
-            // Docs: We load them, but we keep our LOCAL order if we have one
-            const fetchedDocs = deduplicate(docs.data || [], 'name');
-            const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
-            if (savedData && savedData.adminDocsOrder) {
-                appData.adminDocs = fetchedDocs.sort((a, b) => {
-                    let indexA = savedData.adminDocsOrder.indexOf(a.id);
-                    let indexB = savedData.adminDocsOrder.indexOf(b.id);
+            // 4. PROCESS DOCS (Filter out the hidden state row)
+            const fetchedDocs = (docs.data || []).filter(d => d.name !== '_INTERNAL_STATE_');
+            const savedOrder = cloudState.adminDocsOrder || (JSON.parse(localStorage.getItem('sf_club_data'))?.adminDocsOrder);
+            
+            if (savedOrder) {
+                appData.adminDocs = deduplicate(fetchedDocs, 'name').sort((a, b) => {
+                    let indexA = savedOrder.indexOf(a.id);
+                    let indexB = savedOrder.indexOf(b.id);
                     if (indexA === -1) indexA = 9999;
                     if (indexB === -1) indexB = 9999;
                     return indexA - indexB;
                 });
+                appData.adminDocsOrder = savedOrder;
             } else {
-                appData.adminDocs = fetchedDocs;
+                appData.adminDocs = deduplicate(fetchedDocs, 'name');
             }
 
-            // Subscribers: Load from cloud if table exists, otherwise use local
-            if (!subs.error && subs.data) {
+            // 5. PROCESS SUBSCRIBERS
+            // Priority: Real table -> Cloud State Row -> Local Storage
+            if (!subs.error && subs.data?.length > 0) {
                 appData.subscribers = subs.data;
-            } else if (savedData && savedData.subscribers) {
-                appData.subscribers = savedData.subscribers;
+            } else if (cloudState.subscribers) {
+                appData.subscribers = cloudState.subscribers;
+            } else {
+                const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
+                if (savedData?.subscribers) appData.subscribers = savedData.subscribers;
             }
 
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
@@ -132,8 +149,29 @@ async function loadDataAndSync() {
 
         renderAll();
     } catch (err) {
-        console.warn("Supabase sync issue. Using local data fallback.");
+        console.warn("Supabase sync issue. Using local data fallback.", err);
         renderAll();
+    }
+}
+
+async function saveGlobalState() {
+    // This function packs subscribers and ordering into a single row in the existing docs table
+    // This achieves cross-device sync without requiring new tables or columns.
+    const state = {
+        subscribers: appData.subscribers || [],
+        adminDocsOrder: appData.adminDocsOrder || []
+    };
+
+    try {
+        const { data: existing } = await supabaseClient.from('admin_docs').select('id').eq('name', '_INTERNAL_STATE_').single();
+        
+        if (existing) {
+            await supabaseClient.from('admin_docs').update({ url: JSON.stringify(state) }).eq('id', existing.id);
+        } else {
+            await supabaseClient.from('admin_docs').insert({ name: '_INTERNAL_STATE_', url: JSON.stringify(state) });
+        }
+    } catch (err) {
+        console.warn("Failed to save global state to cloud", err);
     }
 }
 
@@ -350,7 +388,8 @@ function renderAdminLists() {
                     appData.adminDocsOrder = newOrderIds;
                     localStorage.setItem('sf_club_data', JSON.stringify(appData));
                     
-                    console.log("New order saved locally. (Cross-device sync requires an 'order_index' column in Supabase)");
+                    // Sync to cloud using the internal state row
+                    saveGlobalState();
                 }
             });
         }
@@ -438,6 +477,9 @@ window.deleteSubscriber = async function (idStr) {
 
             appData.subscribers = appData.subscribers.filter(s => s.id !== idStr && s.phone !== idStr);
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
+            
+            // Sync to cloud state
+            saveGlobalState();
             
             // Sync in background without full re-render
             loadDataAndSync(); 
@@ -1022,14 +1064,17 @@ if (reminderForm) {
         
         if (!appData.subscribers) appData.subscribers = [];
         appData.subscribers.unshift({ name: firstName, phone: phone, id: Date.now() });
+        localStorage.setItem('sf_club_signed_up', 'true');
         localStorage.setItem('sf_club_data', JSON.stringify(appData));
+        
+        // Sync to cloud row
+        saveGlobalState();
         renderAdminLists(); 
         
         try {
+            // Also attempt direct insert in case they DO have the table
             await supabaseClient.from('subscribers').insert({ name: firstName, phone: phone });
-            // Save state to prevent multiple signups
-            localStorage.setItem('sf_club_signed_up', 'true');
-        } catch(err) { console.warn("Supabase insert failed", err); }
+        } catch(err) { /* Silent fail if table missing */ }
         
         const formContainer = document.getElementById('text-reminder-form-container');
         const successDiv = document.getElementById('text-reminder-success');
