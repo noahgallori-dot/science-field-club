@@ -1473,7 +1473,7 @@ hr {
     color: var(--secondary);
 }
 
-.social-btn-condensed {
+.connect-action-btn {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -1486,12 +1486,12 @@ hr {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.social-btn-condensed:hover {
+.connect-action-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: var(--secondary);
 }
 
-.ig-pfp {
+.connect-img {
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -1500,19 +1500,19 @@ hr {
     background: #fff;
 }
 
-.ig-info {
+.connect-info {
     display: flex;
     flex-direction: column;
 }
 
-.ig-handle {
+.connect-handle {
     font-family: var(--font-heading);
     font-weight: 700;
     font-size: 1rem;
     letter-spacing: 0.5px;
 }
 
-.ig-cta {
+.connect-cta {
     font-size: 0.75rem;
     color: #cbd5e1;
 }
