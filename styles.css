@@ -1411,6 +1411,21 @@ hr {
     cursor: grabbing !important;
 }
 
+.sortable-fallback {
+    opacity: 0.98 !important;
+    background: #ffffff !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    transform: scale(1.02) rotate(1deg);
+    cursor: grabbing !important;
+    z-index: 9999 !important;
+    pointer-events: none;
+    border: 1px solid var(--primary) !important;
+    border-radius: 8px !important;
+    position: fixed !important;
+    overflow: visible !important;
+    transition: left 0.05s linear, top 0.05s linear;
+}
+
 .drag-handle:active,
 .drag-handle:active * {
     cursor: grabbing !important;
@@ -1597,4 +1612,19 @@ hr {
     .footer-links-condensed {
         justify-content: center;
     }
+}
+
+gap: 1.5rem;
+}
+
+.footer-bottom-condensed {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+}
+
+.footer-links-condensed {
+    justify-content: center;
+}
 }

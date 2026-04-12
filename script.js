@@ -99,24 +99,24 @@ async function loadDataAndSync() {
             const stateRow = docs.data?.find(d => d.name === '_INTERNAL_STATE_');
             let cloudState = {};
             if (stateRow) {
-                try { 
+                try {
                     // The "url" field is used as a JSON storage blob
-                    cloudState = JSON.parse(stateRow.url); 
-                } catch(e) { console.warn("State row corrupted", e); }
+                    cloudState = JSON.parse(stateRow.url);
+                } catch (e) { console.warn("State row corrupted", e); }
             }
 
             // 2. PROCESS CALENDAR
             appData.calendar = deduplicate(cal.data || [], 'title').sort((a, b) => {
                 return parseDate(a.date) - parseDate(b.date);
             });
-            
+
             // 3. PROCESS RESOURCES
             appData.resources = deduplicate(res.data || [], 'title');
 
             // 4. PROCESS DOCS (Filter out the hidden state row)
             const fetchedDocs = (docs.data || []).filter(d => d.name !== '_INTERNAL_STATE_');
             const savedOrder = cloudState.adminDocsOrder || (JSON.parse(localStorage.getItem('sf_club_data'))?.adminDocsOrder);
-            
+
             if (savedOrder) {
                 appData.adminDocs = deduplicate(fetchedDocs, 'name').sort((a, b) => {
                     let indexA = savedOrder.indexOf(a.id);
@@ -164,7 +164,7 @@ async function saveGlobalState() {
 
     try {
         const { data: existing } = await supabaseClient.from('admin_docs').select('id').eq('name', '_INTERNAL_STATE_').single();
-        
+
         if (existing) {
             await supabaseClient.from('admin_docs').update({ url: JSON.stringify(state) }).eq('id', existing.id);
         } else {
@@ -361,19 +361,123 @@ function renderAdminLists() {
             // Using the modal content container for scrolling context
             const modalContent = document.querySelector('.admin-modal-content');
 
+            // --- Edge-drag tracking state ---
+            let _dragActive = false;
+            let _lastMouseX = 0;
+            let _lastMouseY = 0;
+            let _mouseOutside = false;
+            let _edgeScrollRAF = null;
+            let _fallbackEl = null;
+
+            function onGlobalMouseMove(e) {
+                _lastMouseX = e.clientX;
+                _lastMouseY = e.clientY;
+                _mouseOutside = false;
+            }
+
+            function onDocMouseLeave(e) {
+                if (!_dragActive) return;
+                _mouseOutside = true;
+
+                // Clamp to window edges and keep the fallback clone at the boundary
+                const clampedX = Math.max(0, Math.min(window.innerWidth - 1, e.clientX));
+                const clampedY = Math.max(0, Math.min(window.innerHeight - 1, e.clientY));
+                _lastMouseX = clampedX;
+                _lastMouseY = clampedY;
+
+                if (_fallbackEl) {
+                    _fallbackEl.style.left = clampedX + 'px';
+                    _fallbackEl.style.top = clampedY + 'px';
+                }
+
+                startEdgeAutoScroll();
+            }
+
+            function onDocMouseEnter() {
+                _mouseOutside = false;
+                stopEdgeAutoScroll();
+            }
+
+            function startEdgeAutoScroll() {
+                if (_edgeScrollRAF) return;
+
+                function tick() {
+                    if (!_dragActive || !_mouseOutside) {
+                        _edgeScrollRAF = null;
+                        return;
+                    }
+
+                    const scrollContainer = modalContent || docsList.closest('.manage-list');
+                    if (scrollContainer) {
+                        const rect = scrollContainer.getBoundingClientRect();
+                        const edgeZone = 60;
+                        const speed = 12;
+
+                        // Scroll up when cursor is near/above the top edge
+                        if (_lastMouseY <= rect.top + edgeZone) {
+                            scrollContainer.scrollTop -= speed;
+                        }
+                        // Scroll down when cursor is near/below the bottom edge
+                        if (_lastMouseY >= rect.bottom - edgeZone) {
+                            scrollContainer.scrollTop += speed;
+                        }
+                    }
+
+                    _edgeScrollRAF = requestAnimationFrame(tick);
+                }
+
+                _edgeScrollRAF = requestAnimationFrame(tick);
+            }
+
+            function stopEdgeAutoScroll() {
+                if (_edgeScrollRAF) {
+                    cancelAnimationFrame(_edgeScrollRAF);
+                    _edgeScrollRAF = null;
+                }
+            }
+
             docsList._sortable = Sortable.create(docsList, {
                 handle: '.drag-handle',
-                animation: 250,
-                easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+                animation: 300,
+                easing: "cubic-bezier(0.2, 0, 0, 1)",
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
                 dragClass: 'sortable-drag',
-                scroll: modalContent, // Explicitly constrain scroll to the modal
-                forceAutoScrollFallback: true,
-                scrollSensitivity: 100, // Distance in px to edge to start scrolling
-                scrollSpeed: 20, // Speed of scroll
-                bubbleScroll: false, // Prevent background window scrolling
+                forceFallback: true, // This makes the item follow the mouse more accurately
+                fallbackClass: "sortable-fallback",
+                fallbackOnBody: true,
+                fallbackTolerance: 3, // Prevent accidental drags when trying to scroll
+                swapThreshold: 0.65,
+                invertSwap: true,
+                scroll: true, // Automatically handle scrolling
+                scrollSensitivity: 60,
+                scrollSpeed: 15,
+                removeCloneOnHide: false,
+                onStart: function (evt) {
+                    _dragActive = true;
+                    _mouseOutside = false;
+
+                    // Grab fallback clone on next frame (SortableJS creates it asynchronously)
+                    requestAnimationFrame(() => {
+                        _fallbackEl = document.querySelector('.sortable-fallback');
+                    });
+
+                    // Register global listeners
+                    document.addEventListener('mousemove', onGlobalMouseMove, true);
+                    document.documentElement.addEventListener('mouseleave', onDocMouseLeave);
+                    document.documentElement.addEventListener('mouseenter', onDocMouseEnter);
+                },
                 onEnd: function (evt) {
+                    _dragActive = false;
+                    _mouseOutside = false;
+                    _fallbackEl = null;
+                    stopEdgeAutoScroll();
+
+                    // Clean up global listeners
+                    document.removeEventListener('mousemove', onGlobalMouseMove, true);
+                    document.documentElement.removeEventListener('mouseleave', onDocMouseLeave);
+                    document.documentElement.removeEventListener('mouseenter', onDocMouseEnter);
+
                     const newOrderIds = Array.from(docsList.children).map(child => parseInt(child.getAttribute('data-id')));
 
                     // Update appData.adminDocs locally based on new order
@@ -383,11 +487,11 @@ function renderAdminLists() {
                         if (doc) newAdminDocs.push(doc);
                     });
                     appData.adminDocs = newAdminDocs;
-                    
+
                     // Save the ID order specifically to localStorage
                     appData.adminDocsOrder = newOrderIds;
                     localStorage.setItem('sf_club_data', JSON.stringify(appData));
-                    
+
                     // Sync to cloud using the internal state row
                     saveGlobalState();
                 }
@@ -432,24 +536,28 @@ function renderAdminLists() {
     // Admin Subscribers List
     const subsList = document.getElementById('admin-subscribers-list');
     if (subsList) {
-        subsList.innerHTML = (appData.subscribers || []).map(sub => `
-            <div class="manage-item card-item" style="padding: 0.75rem 1rem;" data-id="${sub.id || sub.phone}">
-                <div class="item-info">
-                    <strong style="color: var(--primary);">${sub.name}</strong>
-                    <div style="font-family: monospace; font-size: 0.95rem; margin-top: 0.2rem;">${sub.phone}</div>
-                </div>
-                <div class="item-actions">
-                    <button class="icon-btn danger" onclick="deleteSubscriber(${sub.id ? sub.id : `'${sub.phone}'`})"><i data-lucide="trash-2"></i></button>
-                </div>
-            </div>
-        `).join('');
         if (!appData.subscribers || appData.subscribers.length === 0) {
-            subsList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-style: italic;">No subscribers yet.</div>`;
+            subsList.innerHTML = `
+                <div style="height: 150px; display: flex; align-items: center; justify-content: center; width: 100%; color: var(--text-muted); font-style: italic; font-size: 1.1rem;">
+                    No subscribers yet.
+                </div>`;
+        } else {
+            subsList.innerHTML = (appData.subscribers || []).map(sub => `
+                <div class="manage-item card-item" style="padding: 0.75rem 1rem;" data-id="${sub.id || sub.phone}">
+                    <div class="item-info">
+                        <strong style="color: var(--primary);">${sub.name}</strong>
+                        <div style="font-family: monospace; font-size: 0.95rem; margin-top: 0.2rem;">${sub.phone}</div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="icon-btn danger" onclick="deleteSubscriber(${sub.id ? sub.id : `'${sub.phone}'`})"><i data-lucide="trash-2"></i></button>
+                    </div>
+                </div>
+            `).join('');
         }
     }
 }
 
-window.copyAllSubscribers = function() {
+window.copyAllSubscribers = function () {
     if (!appData.subscribers || appData.subscribers.length === 0) return;
     const list = appData.subscribers.map(s => `${s.name}\\t${s.phone}`).join('\\n');
     navigator.clipboard.writeText(list).then(() => {
@@ -477,12 +585,12 @@ window.deleteSubscriber = async function (idStr) {
 
             appData.subscribers = appData.subscribers.filter(s => s.id !== idStr && s.phone !== idStr);
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
-            
+
             // Sync to cloud state
-            saveGlobalState();
-            
-            // Sync in background without full re-render
-            loadDataAndSync(); 
+            await saveGlobalState();
+
+            // If the list is now empty, re-render to show centering
+            if (appData.subscribers.length === 0) renderAdminLists();
         } catch (err) {
             console.error("Error deleting subscriber:", err);
             renderAdminLists(); // Revert on failure
@@ -1035,7 +1143,7 @@ function capitalize(str) {
 // --- TEXT REMINDERS ---
 const phoneInput = document.getElementById('reminder-phone');
 if (phoneInput) {
-    phoneInput.addEventListener('input', function(e) {
+    phoneInput.addEventListener('input', function (e) {
         // Keep only digits, up to 10
         const input = e.target.value.replace(/\D/g, '').substring(0, 10);
         const zip = input.substring(0, 3);
@@ -1056,50 +1164,50 @@ if (phoneInput) {
 
 const reminderForm = document.getElementById('text-reminder-form');
 if (reminderForm) {
-    reminderForm.addEventListener('submit', async function(e) {
+    reminderForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         const firstName = document.getElementById('reminder-first-name').value;
         const phone = document.getElementById('reminder-phone').value;
-        
+
         if (!appData.subscribers) appData.subscribers = [];
         appData.subscribers.unshift({ name: firstName, phone: phone, id: Date.now() });
         localStorage.setItem('sf_club_signed_up', 'true');
         localStorage.setItem('sf_club_data', JSON.stringify(appData));
-        
+
         // Sync to cloud row
         saveGlobalState();
-        renderAdminLists(); 
-        
+        renderAdminLists();
+
         try {
             // Also attempt direct insert in case they DO have the table
             await supabaseClient.from('subscribers').insert({ name: firstName, phone: phone });
-        } catch(err) { /* Silent fail if table missing */ }
-        
+        } catch (err) { /* Silent fail if table missing */ }
+
         const formContainer = document.getElementById('text-reminder-form-container');
         const successDiv = document.getElementById('text-reminder-success');
-        
+
         // 1. Fade out and slide down the form
         formContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
         formContainer.style.opacity = '0';
         formContainer.style.transform = 'translateY(10px)';
-        
+
         setTimeout(() => {
             formContainer.style.display = 'none';
-            
+
             // 2. Prepare the success message state
             successDiv.style.opacity = '0';
             successDiv.style.transform = 'translateY(10px)';
             successDiv.style.display = 'flex';
-            
+
             // Force a browser reflow before animating in
             void successDiv.offsetWidth;
-            
+
             // 3. Fade in and slide up the success message
             successDiv.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
             successDiv.style.opacity = '1';
             successDiv.style.transform = 'translateY(0)';
-            
+
             if (window.lucide) lucide.createIcons();
         }, 300);
     });
