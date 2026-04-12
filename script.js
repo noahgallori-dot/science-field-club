@@ -19,9 +19,6 @@ window.addEventListener('load', () => {
 
 // Initialize Lucide Icons
 lucide.createIcons();
-// Prevent the loader icon from being re-processed by future createIcons() calls
-const loaderIcon = document.querySelector('.loader-icon');
-if (loaderIcon) loaderIcon.removeAttribute('data-lucide');
 
 // --- SUPABASE CONFIG ---
 const SUPABASE_URL = 'https://qhgmjekyyxerrjlkrogp.supabase.co';
@@ -88,10 +85,11 @@ let appData = JSON.parse(localStorage.getItem('sf_club_data')) || JSON.parse(JSO
 
 async function loadDataAndSync() {
     try {
-        const [cal, res, docs] = await Promise.all([
+        const [cal, res, docs, subs] = await Promise.all([
             supabaseClient.from('calendar').select('*').order('id', { ascending: true }),
             supabaseClient.from('resources').select('*').order('id', { ascending: true }),
-            supabaseClient.from('admin_docs').select('*').order('id', { ascending: true })
+            supabaseClient.from('admin_docs').select('*').order('id', { ascending: true }),
+            supabaseClient.from('subscribers').select('*').order('id', { ascending: false })
         ]);
 
         const hasCloudData = (cal.data?.length > 0 || res.data?.length > 0 || docs.data?.length > 0);
@@ -104,7 +102,7 @@ async function loadDataAndSync() {
                 return dateA - dateB;
             });
             appData.resources = deduplicate(res.data || [], 'title');
-            
+
             // Preserve our local ordering for admin docs if it exists
             const fetchedDocs = deduplicate(docs.data || [], 'name');
             const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
@@ -122,6 +120,7 @@ async function loadDataAndSync() {
             }
 
             // Save our clean, sorted copy back to local storage
+            appData.subscribers = subs?.data || [];
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
         } else {
             console.log("Cloud is empty. Migrating your local data to cloud...");
@@ -302,7 +301,7 @@ function renderAdminLists() {
             }
             // Using the modal content container for scrolling context
             const modalContent = document.querySelector('.admin-modal-content');
-            
+
             docsList._sortable = Sortable.create(docsList, {
                 handle: '.drag-handle',
                 animation: 250,
@@ -317,7 +316,7 @@ function renderAdminLists() {
                 bubbleScroll: false, // Prevent background window scrolling
                 onEnd: async function (evt) {
                     const newOrderIds = Array.from(docsList.children).map(child => parseInt(child.getAttribute('data-id')));
-                    
+
                     // Update appData.adminDocs locally based on new order
                     const newAdminDocs = [];
                     newOrderIds.forEach(id => {
@@ -326,7 +325,7 @@ function renderAdminLists() {
                     });
                     appData.adminDocs = newAdminDocs;
                     localStorage.setItem('sf_club_data', JSON.stringify(appData));
-                    
+
                     // Attempt to sync the new order to supabase.
                     // We'll update an 'order_index' or just swap values if needed.
                     try {
@@ -373,6 +372,50 @@ function renderAdminLists() {
                 </div>
             </div>
         `).join('');
+    }
+
+    // Admin Subscribers List
+    const subsList = document.getElementById('admin-subscribers-list');
+    if (subsList) {
+        subsList.innerHTML = (appData.subscribers || []).map(sub => `
+            <div class="manage-item card-item" style="padding: 0.75rem 1rem;">
+                <div class="item-info">
+                    <strong style="color: var(--primary);">${sub.name}</strong>
+                    <div style="font-family: monospace; font-size: 0.95rem; margin-top: 0.2rem;">${sub.phone}</div>
+                </div>
+                <div class="item-actions">
+                    <button class="icon-btn danger" onclick="deleteSubscriber(${sub.id || `'${sub.phone}'`})"><i data-lucide="trash-2"></i></button>
+                </div>
+            </div>
+        `).join('');
+        if (!appData.subscribers || appData.subscribers.length === 0) {
+            subsList.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-style: italic;">No subscribers yet.</div>`;
+        }
+    }
+}
+
+window.copyAllSubscribers = function() {
+    if (!appData.subscribers || appData.subscribers.length === 0) return;
+    const list = appData.subscribers.map(s => `${s.name}\\t${s.phone}`).join('\\n');
+    navigator.clipboard.writeText(list).then(() => {
+        alert("Copied " + appData.subscribers.length + " subscribers to clipboard!");
+    });
+}
+
+window.deleteSubscriber = async function (idStr) {
+    if (confirm('Remove this subscriber?')) {
+        try {
+            if (typeof idStr === 'number') {
+                await supabaseClient.from('subscribers').delete().eq('id', idStr);
+            } else {
+                await supabaseClient.from('subscribers').delete().eq('phone', idStr);
+            }
+            appData.subscribers = appData.subscribers.filter(s => s.id !== idStr && s.phone !== idStr);
+            renderAdminLists();
+            await loadDataAndSync();
+        } catch (err) {
+            console.error("Error deleting subscriber:", err);
+        }
     }
 }
 
@@ -447,11 +490,22 @@ function updateHeader() {
 }
 
 if (mobileBtn) {
-    mobileBtn.addEventListener('click', () => {
+    mobileBtn.addEventListener('click', (event) => {
         navLinks.classList.toggle('active');
         updateHeader();
+        event.stopPropagation(); // Prevent document click from immediately closing it
     });
 }
+
+// Close mobile menu when clicking outside of it
+document.addEventListener('click', (event) => {
+    if (navLinks && navLinks.classList.contains('active')) {
+        if (!mobileBtn.contains(event.target) && !navLinks.contains(event.target)) {
+            navLinks.classList.remove('active');
+            updateHeader();
+        }
+    }
+});
 
 // Close mobile menu when a link is clicked
 document.querySelectorAll('.nav-links a').forEach(link => {
@@ -493,7 +547,7 @@ function openAdmin() {
     if (modalContent) modalContent.classList.add('compact');
 
     // Check if already logged in (simulated for session)
-    if (sessionStorage.getItem('is_logged_in') === 'true') {
+    if (localStorage.getItem('is_logged_in') === 'true') {
         showDashboard();
     } else {
         document.getElementById("admin-login-screen").style.display = "block";
@@ -522,7 +576,7 @@ function checkAdminLogin() {
     const errorMsg = document.getElementById("admin-error");
 
     if (pwdInput === "SenorIsCool5") {
-        sessionStorage.setItem('is_logged_in', 'true');
+        localStorage.setItem('is_logged_in', 'true');
         showDashboard();
     } else {
         errorMsg.style.display = "block";
@@ -643,11 +697,6 @@ function openFormModal(title, fields) {
     document.getElementById('form-fields').innerHTML = fields;
     document.getElementById('form-modal').classList.add('show');
     document.body.classList.add('modal-open');
-    // Set button text based on add vs edit
-    const submitBtn = document.getElementById('form-submit-btn');
-    if (submitBtn) {
-        submitBtn.textContent = currentEditId ? 'Save Changes' : 'Add';
-    }
     if (window.lucide) lucide.createIcons();
 }
 
@@ -910,6 +959,74 @@ window.addLinkRow = function () {
 function capitalize(str) {
     if (!str) return "";
     return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// --- TEXT REMINDERS ---
+const phoneInput = document.getElementById('reminder-phone');
+if (phoneInput) {
+    phoneInput.addEventListener('input', function(e) {
+        // Keep only digits, up to 10
+        const input = e.target.value.replace(/\D/g, '').substring(0, 10);
+        const zip = input.substring(0, 3);
+        const middle = input.substring(3, 6);
+        const last = input.substring(6, 10);
+
+        if (input.length > 6) {
+            e.target.value = `(${zip}) ${middle}-${last}`;
+        } else if (input.length > 3) {
+            e.target.value = `(${zip}) ${middle}`;
+        } else if (input.length > 0) {
+            e.target.value = `(${zip}`;
+        } else {
+            e.target.value = '';
+        }
+    });
+}
+
+const reminderForm = document.getElementById('text-reminder-form');
+if (reminderForm) {
+    reminderForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const firstName = document.getElementById('reminder-first-name').value;
+        const phone = document.getElementById('reminder-phone').value;
+        
+        if (!appData.subscribers) appData.subscribers = [];
+        appData.subscribers.unshift({ name: firstName, phone: phone, id: Date.now() });
+        localStorage.setItem('sf_club_data', JSON.stringify(appData));
+        renderAdminLists(); 
+        
+        try {
+            await supabaseClient.from('subscribers').insert({ name: firstName, phone: phone });
+        } catch(err) { console.warn("Supabase insert failed", err); }
+        
+        const formContainer = document.getElementById('text-reminder-form-container');
+        const successDiv = document.getElementById('text-reminder-success');
+        
+        // 1. Fade out and slide down the form
+        formContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        formContainer.style.opacity = '0';
+        formContainer.style.transform = 'translateY(10px)';
+        
+        setTimeout(() => {
+            formContainer.style.display = 'none';
+            
+            // 2. Prepare the success message state
+            successDiv.style.opacity = '0';
+            successDiv.style.transform = 'translateY(10px)';
+            successDiv.style.display = 'flex';
+            
+            // Force a browser reflow before animating in
+            void successDiv.offsetWidth;
+            
+            // 3. Fade in and slide up the success message
+            successDiv.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            successDiv.style.opacity = '1';
+            successDiv.style.transform = 'translateY(0)';
+            
+            if (window.lucide) lucide.createIcons();
+        }, 300);
+    });
 }
 
 // Initial Render

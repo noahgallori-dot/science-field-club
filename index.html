@@ -37,10 +37,10 @@
         <!-- Navigation -->
         <nav class="navbar">
             <div class="nav-container">
-                <a href="#" class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'}); event.preventDefault();">
+                <div class="logo">
                     <i data-lucide="atom" class="logo-icon"></i>
                     <span class="logo-text">BHS Science<br class="mobile-break"> Field Club</span>
-                </a>
+                </div>
                 <div class="nav-right">
                     <div class="nav-links">
                         <a href="#about">About</a>
@@ -125,6 +125,36 @@
 
             <div id="timeline-container" class="timeline">
                 <!-- Populated by JS -->
+            </div>
+
+            <!-- Wide Banner for Text Reminders -->
+            <div class="card card-beige" style="margin-top: 3rem; padding: 1.75rem 2.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem;">
+                <div style="flex: 0 1 390px; min-width: 350px;">
+                    <h3 style="display: flex; align-items: center; gap: 0.75rem; font-family: var(--font-heading); color: var(--text-heading); font-size: 1.5rem; margin-bottom: 0.5rem;">
+                        <i data-lucide="message-square" style="color: var(--primary);"></i> Want text reminders?
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 1rem; margin: 0; padding-right: 1rem;">Sign up for automated text reminders about upcoming field trips and deadlines.</p>
+                </div>
+                
+                <div id="text-reminder-form-container" style="flex: 1 1 400px;">
+                    <form id="text-reminder-form" style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%;">
+                        <div class="form-group" style="flex: 1; min-width: 140px;">
+                            <input type="text" id="reminder-first-name" class="form-control" required placeholder="First Name">
+                        </div>
+                        <div class="form-group" style="flex: 1.2; min-width: 180px;">
+                            <input type="tel" id="reminder-phone" class="form-control" required placeholder="(XXX) XXX-XXXX" maxlength="14" pattern="\(\d{3}\) \d{3}-\d{4}">
+                        </div>
+                        <button type="submit" class="btn btn-navy" style="font-family: var(--font-heading); padding: 0 1.5rem;">Sign Up</button>
+                    </form>
+                </div>
+                
+                <div id="text-reminder-success" style="display: none; flex: 1 1 400px; background: rgba(22, 163, 74, 0.1); border: 1px solid rgba(22, 163, 74, 0.3); border-radius: 8px; padding: 1.25rem; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="check-circle" style="width: 24px; height: 24px; color: #16a34a; flex-shrink: 0;"></i>
+                    <div style="text-align: left; line-height: 1.4;">
+                        <span style="color: var(--text-heading); font-family: var(--font-heading); font-weight: bold;">Submitted!</span>
+                        <span style="color: var(--text-muted); font-size: 0.95rem;">You'll get automated reminders. Reply STOP to opt out.</span>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -299,11 +329,41 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="container" style="text-align: center;">
-            <i data-lucide="atom" style="width: 32px; height: 32px; color: var(--primary); margin-bottom: 1rem;"></i>
-            <h2 style="font-family: var(--font-heading); margin-bottom: 0.5rem; color: var(--text-heading);">Science
-                Field Club</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Banks, Oregon • 97106</p>
+        <div class="container">
+            <div class="footer-condensed">
+                <div class="footer-brand-condensed">
+                    <div class="footer-logo-condensed">
+                        <i data-lucide="atom" class="footer-logo-icon"></i>
+                        <span class="footer-logo-text">Science Field Club</span>
+                    </div>
+                    <div class="footer-location-condensed">
+                        <i data-lucide="map-pin"></i> Banks, Oregon • 97106
+                    </div>
+                </div>
+
+                <div class="footer-connect-condensed">
+                    <a href="https://www.instagram.com/bhssciencefieldclub?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+                        target="_blank" rel="noopener noreferrer" class="social-btn-condensed">
+                        <img src="images/logo.png" alt="@bhssciencefieldclub Instagram" class="ig-pfp">
+                        <div class="ig-info">
+                            <span class="ig-handle">@bhssciencefieldclub</span>
+                            <span class="ig-cta">Follow us on Instagram</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="footer-bottom-condensed">
+                <div class="footer-links-condensed">
+                    <a href="#about">About</a>
+                    <a href="#events">Schedule</a>
+                    <a href="#resources">Resources</a>
+                    <a href="#trip-teams">Trip Teams</a>
+                </div>
+                <div class="footer-copyright">
+                    © 2026 BHS Science Field Club. All rights reserved.
+                </div>
+            </div>
         </div>
     </footer>
 
@@ -320,7 +380,7 @@
                     style="text-align: center; margin-bottom: 0.5rem; color: var(--text-heading); font-family: var(--font-heading);">
                     Officer Access</h2>
                 <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Please enter the
-                    designated password to access internal slides and sheets.</p>
+                    designated password to access internal documents and edit the calendar.</p>
 
                 <div class="form-group" style="max-width: 300px; margin: 0 auto;">
                     <div class="password-toggle-wrapper">
@@ -353,6 +413,7 @@
                         Resources</button>
                     <button class="tab-btn" onclick="switchTab('tab-calendar')"><i data-lucide="calendar"></i>
                         Calendar</button>
+                    <button class="tab-btn" onclick="switchTab('tab-subscribers')"><i data-lucide="users"></i> Subscribers</button>
                 </div>
 
                 <div class="tab-content show" id="tab-docs">
@@ -382,6 +443,15 @@
                             Event</button>
                     </div>
                     <div id="admin-calendar-list" class="manage-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-subscribers">
+                    <div class="section-manage-header" style="justify-content: space-between; align-items: center; display: flex;">
+                        <h3 style="margin: 0;">Text Subscriptions</h3>
+                    </div>
+                    <div id="admin-subscribers-list" class="manage-list" style="max-height: 400px; overflow-y: auto;">
                         <!-- Populated by JS -->
                     </div>
                 </div>
