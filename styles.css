@@ -1498,6 +1498,14 @@ hr {
     object-fit: cover;
     border: 2px solid var(--secondary);
     background: #fff;
+    flex-shrink: 0;
+}
+
+.connect-fallback-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    color: var(--secondary);
 }
 
 .connect-info {
