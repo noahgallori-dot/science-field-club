@@ -446,7 +446,10 @@ function renderAdminLists() {
                 forceFallback: true, // This makes the item follow the mouse more accurately
                 fallbackClass: "sortable-fallback",
                 fallbackOnBody: true,
-                fallbackTolerance: 3, // Prevent accidental drags when trying to scroll
+                fallbackTolerance: 3, 
+                delay: 100, // Small delay for touch pickup
+                delayOnTouchOnly: true,
+                touchStartThreshold: 5, // Allow 5px of movement before canceling drag
                 swapThreshold: 0.65,
                 invertSwap: true,
                 scroll: docsList, // Explicitly set the scroll container

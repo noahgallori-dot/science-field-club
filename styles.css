@@ -1401,6 +1401,14 @@ hr {
         gap: 0.5rem !important;
     }
 
+    .drag-handle {
+        padding: 0.5rem 0.25rem;
+        margin-left: -0.5rem;
+        margin-right: 0.25rem !important;
+        display: flex;
+        align-items: center;
+    }
+
     .item-info {
         margin-right: 0.25rem;
     }
