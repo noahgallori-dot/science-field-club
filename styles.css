@@ -1389,15 +1389,30 @@ hr {
         padding-bottom: 5px;
     }
 
-    .manage-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
+    .manage-item,
+    .sortable-fallback {
+        padding: 0.75rem 1rem !important;
+        gap: 0.75rem !important;
+    }
+
+    .item-info {
+        margin-right: 0.5rem;
     }
 
     .item-actions {
-        width: 100%;
-        justify-content: flex-end;
+        width: auto;
+        gap: 0.25rem;
+    }
+
+    .icon-btn {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    /* Hide links in the list AND the drag ghost on mobile */
+    #admin-docs-list .item-info span,
+    .sortable-fallback .item-info span {
+        display: none !important;
     }
 }
 
@@ -1427,7 +1442,7 @@ hr {
     opacity: 0.98 !important;
     background: #ffffff !important;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-    transform: scale(1.02) rotate(1deg);
+    transform: scale(1.02);
     cursor: grabbing !important;
     z-index: 9999 !important;
     pointer-events: none;
