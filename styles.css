@@ -134,6 +134,9 @@ body::-webkit-scrollbar {
 
 body.modal-open {
     overflow: hidden;
+    height: 100%;
+    position: fixed;
+    width: 100%;
 }
 
 /* Utilities */
@@ -1473,6 +1476,8 @@ hr {
     padding-right: 1.25rem;
     scrollbar-width: thin !important;
     scrollbar-color: var(--primary) #eef2f6 !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .manage-list::-webkit-scrollbar {

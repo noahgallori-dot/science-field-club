@@ -407,11 +407,11 @@ function renderAdminLists() {
                         return;
                     }
 
-                    const scrollContainer = modalContent || docsList.closest('.manage-list');
+                    const scrollContainer = docsList; 
                     if (scrollContainer) {
                         const rect = scrollContainer.getBoundingClientRect();
-                        const edgeZone = 60;
-                        const speed = 12;
+                        const edgeZone = 80; // Increased zone
+                        const speed = 15; // Increased speed
 
                         // Scroll up when cursor is near/above the top edge
                         if (_lastMouseY <= rect.top + edgeZone) {
@@ -449,9 +449,9 @@ function renderAdminLists() {
                 fallbackTolerance: 3, // Prevent accidental drags when trying to scroll
                 swapThreshold: 0.65,
                 invertSwap: true,
-                scroll: true, // Automatically handle scrolling
-                scrollSensitivity: 60,
-                scrollSpeed: 15,
+                scroll: docsList, // Explicitly set the scroll container
+                scrollSensitivity: 100, // Very sensitive for mobile
+                scrollSpeed: 20,
                 removeCloneOnHide: false,
                 onStart: function (evt) {
                     _dragActive = true;
