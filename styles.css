@@ -1153,6 +1153,9 @@ body.modal-open {
 /* Admin Dashboard Enhancements */
 .admin-modal-content {
     max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .dashboard-header {
@@ -1162,6 +1165,7 @@ body.modal-open {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid var(--secondary);
+    flex-shrink: 0;
 }
 
 .dashboard-tabs {
@@ -1170,6 +1174,7 @@ body.modal-open {
     margin-bottom: 2rem;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 1px;
+    flex-shrink: 0;
 }
 
 .tab-btn {
@@ -1213,11 +1218,14 @@ body.modal-open {
 
 .tab-content {
     display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
     animation: fadeIn 0.4s ease-out forwards;
 }
 
 .tab-content.show {
-    display: block;
+    display: flex;
 }
 
 @keyframes fadeIn {
@@ -1237,6 +1245,7 @@ body.modal-open {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    flex-shrink: 0;
 }
 
 .section-manage-header h3 {
@@ -1340,6 +1349,9 @@ body.modal-open {
 
 #admin-dashboard {
     min-height: 400px;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 .form-group label {
@@ -1441,7 +1453,7 @@ hr {
 
 /* Reveal scrollbars ONLY in manage-lists */
 .manage-list {
-    max-height: 450px;
+    flex: 1;
     overflow-y: auto;
     padding-right: 1.25rem;
     scrollbar-width: thin !important;

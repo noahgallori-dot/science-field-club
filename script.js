@@ -784,7 +784,7 @@ function showDashboard() {
     if (modalContent) modalContent.classList.remove('compact');
 
     document.getElementById("admin-login-screen").style.display = "none";
-    document.getElementById("admin-dashboard").style.display = "block";
+    document.getElementById("admin-dashboard").style.display = "flex";
     renderAdminLists();
     if (window.lucide) lucide.createIcons();
 }
