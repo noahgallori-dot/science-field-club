@@ -660,6 +660,9 @@ let isNavigating = false;
 let navigationTimeout;
 
 function updateHeader() {
+    // Prevent background header animations while the admin modal is open
+    if (document.body.classList.contains('modal-open')) return;
+
     const shouldScroll = isNavigating || window.scrollY > 50 || (navLinks && navLinks.classList.contains('active'));
     if (shouldScroll !== isScrolled) {
         isScrolled = shouldScroll;
