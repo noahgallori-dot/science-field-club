@@ -109,16 +109,26 @@ async function loadDataAndSync() {
             appData.calendar = deduplicate(cal.data || [], 'title').sort((a, b) => {
                 return parseDate(a.date) - parseDate(b.date);
             });
+            if (appData.calendar.length < (cal.data || []).length) {
+                dbHeal('calendar', cal.data || [], 'title');
+            }
 
             // 3. PROCESS RESOURCES
             appData.resources = deduplicate(res.data || [], 'title');
+            if (appData.resources.length < (res.data || []).length) {
+                dbHeal('resources', res.data || [], 'title');
+            }
 
             // 4. PROCESS DOCS (Filter out the hidden state row)
             const fetchedDocs = (docs.data || []).filter(d => d.name !== '_INTERNAL_STATE_');
+            const uniqueDocs = deduplicate(fetchedDocs, 'name');
+            if (uniqueDocs.length < fetchedDocs.length) {
+                dbHeal('admin_docs', fetchedDocs, 'name');
+            }
             const savedOrder = cloudState.adminDocsOrder || (JSON.parse(localStorage.getItem('sf_club_data'))?.adminDocsOrder);
 
             if (savedOrder) {
-                appData.adminDocs = deduplicate(fetchedDocs, 'name').sort((a, b) => {
+                appData.adminDocs = uniqueDocs.sort((a, b) => {
                     let indexA = savedOrder.indexOf(a.id);
                     let indexB = savedOrder.indexOf(b.id);
                     if (indexA === -1) indexA = 9999;
@@ -127,7 +137,7 @@ async function loadDataAndSync() {
                 });
                 appData.adminDocsOrder = savedOrder;
             } else {
-                appData.adminDocs = deduplicate(fetchedDocs, 'name');
+                appData.adminDocs = uniqueDocs;
             }
 
             // 5. PROCESS SUBSCRIBERS
@@ -183,6 +193,18 @@ function deduplicate(arr, key) {
         seen.add(val);
         return true;
     });
+}
+
+async function dbHeal(table, data, key) {
+    const seen = new Set();
+    for (let item of data) {
+        const val = item[key] + (item.date || '');
+        if (seen.has(val)) {
+            try { await supabaseClient.from(table).delete().eq('id', item.id); } catch(e) {}
+        } else {
+            seen.add(val);
+        }
+    }
 }
 
 async function migrateToCloud(data) {
@@ -863,11 +885,18 @@ function copyEmail(email, element) {
     navigator.clipboard.writeText(email).then(() => {
         const span = element.querySelector('span');
         const originalText = span.innerText;
+        
+        // Lock the width of the entire button and center its contents
+        element.style.width = element.offsetWidth + 'px';
+        element.style.justifyContent = 'center';
+
         span.innerText = "Copied!";
         element.style.color = "#16a34a";
         setTimeout(() => {
             span.innerText = originalText;
             element.style.color = "";
+            element.style.width = '';
+            element.style.justifyContent = '';
         }, 2000);
     });
 }
@@ -953,8 +982,8 @@ window.handleFormSubmit = async function (e) {
 
         if (error) throw error;
 
-        await loadDataAndSync();
         closeFormModal();
+        loadDataAndSync(); // optimistic loading to make UI instantly responsive
         // Removed success alert as requested
     } catch (err) {
         console.error("Supabase Error:", err);

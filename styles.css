@@ -1162,6 +1162,10 @@ body.modal-open {
     min-height: 500px;
 }
 
+.admin-modal-content.compact {
+    min-height: auto;
+}
+
 #admin-login-screen,
 #admin-dashboard {
     width: 100%;
