@@ -119,8 +119,8 @@
                 <i data-lucide="alert-circle" class="alert-icon"></i>
                 <div class="alert-content">
                     <strong>Important Note on Fees:</strong> Please place any fees and permission slips together in a
-                    sealed envelope. Ensure your full name is clearly written on the front, then drop it into the
-                    Science Field Club submission slot in Mr. Richeson's room. You can also pay via Venmo
+                    sealed envelope. Ensure your full name is clearly written on the front, then hand it to Mr.
+                    Richeson. You can also pay via Venmo
                     <b>@krissy-allori</b>.
                 </div>
             </div>
@@ -164,8 +164,8 @@
                     <div style="text-align: left; line-height: 1.4;">
                         <span
                             style="color: var(--text-heading); font-family: var(--font-heading); font-weight: bold;">Submitted!</span>
-                        <span style="color: var(--text-muted); font-size: 0.95rem;">You'll get automated reminders.
-                            Reply STOP to opt out.</span>
+                        <span style="color: var(--text-muted); font-size: 0.95rem;">You will soon receive a text.
+                            Please reply <strong>#stay</strong> to confirm your subscription!</span>
                     </div>
                 </div>
             </div>
@@ -178,7 +178,7 @@
         <div class="container">
             <div class="section-header">
                 <h2>Student Resources</h2>
-                <p class="section-desc">Access public documents, member lists, and permission forms below.</p>
+                <p class="section-desc">Access Member Essentials, event recaps, and permission forms below.</p>
             </div>
 
             <div id="resources-container" class="grid-3">
@@ -495,6 +495,13 @@
         </div>
     </div>
 
+    <!-- EmailJS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+        (function () {
+            emailjs.init("W3ns6jMkHbfgnmWK9");
+        })();
+    </script>
     <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- SortableJS Library -->

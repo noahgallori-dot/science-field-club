@@ -647,6 +647,9 @@ body.modal-open {
 
 .alert-icon {
     color: #d97706;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
 }
 
 /* Resources */

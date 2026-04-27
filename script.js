@@ -44,9 +44,9 @@ const DEFAULT_DATA = {
     resources: [
         {
             id: 1,
-            title: "Club Member List",
-            description: "Current roster of all Science Field Club members.",
-            icon: "users",
+            title: "Member Essentials",
+            description: "Current roster and bylaws of all Science Field Club members.",
+            icon: "file-text",
             links: [{ name: "View Roster", url: "https://docs.google.com/spreadsheets/d/1zW3jt0BTC-vJHBtmn07ziwwamYmfXPxmkOSA_oIOhTA/edit?usp=sharing" }]
         },
         {
@@ -318,7 +318,7 @@ function formatDateForDisplay(dateStr) {
     const date = parseDate(dateStr);
     if (isNaN(date.getTime())) return dateStr;
 
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
 function parseDate(dateStr) {
@@ -343,7 +343,7 @@ function renderStudentResources() {
 
         return `
             <div class="resource-card card card-white">
-                <i data-lucide="${res.icon || 'link'}" class="resource-icon"></i>
+                <i data-lucide="${(res.id === 1 || res.title === 'Member Essentials') ? 'file-text' : (res.icon || 'link')}" class="resource-icon"></i>
                 <h4>${res.title}</h4>
                 <p>${res.description}</p>
                 <div class="resource-links">
@@ -653,7 +653,7 @@ function updateTimelineHeader() {
     } else if (tomorrowsEvents.length > 0) {
         bannerMsg = `<strong>Event Tomorrow:</strong> Get ready for the <strong>${tomorrowsEvents.join(' & ')}</strong>!`;
     } else if (nextEvent) {
-        bannerMsg = `<strong>Next Event:</strong> ${nextEvent.date} - ${nextEvent.title}`;
+        bannerMsg = `<strong>Next Event:</strong> ${formatDateForDisplay(nextEvent.date)} - ${nextEvent.title}`;
     }
 
     if (bannerMsg) {
@@ -1218,6 +1218,22 @@ if (reminderForm) {
             // Also attempt direct insert in case they DO have the table
             await supabaseClient.from('subscribers').insert({ name: firstName, phone: phone });
         } catch (err) { /* Silent fail if table missing */ }
+
+        // Send Email notification using EmailJS
+        try {
+            const now = new Date();
+            const emailParams = {
+                name: firstName,
+                phone: phone,
+                date: now.toLocaleDateString(),
+                time: now.toLocaleTimeString()
+            };
+            if (typeof emailjs !== 'undefined') {
+                emailjs.send('service_eosubks', 'template_pycgjtk', emailParams);
+            }
+        } catch(err) {
+            console.error("EmailJS error:", err);
+        }
 
         const formContainer = document.getElementById('text-reminder-form-container');
         const successDiv = document.getElementById('text-reminder-success');
