@@ -332,7 +332,8 @@ body.modal-open {
 
 .sticky-header-wrapper:not(.scrolled) .logo-text,
 .sticky-header-wrapper:not(.scrolled) .logo-icon,
-.sticky-header-wrapper:not(.scrolled) .nav-links a {
+.sticky-header-wrapper:not(.scrolled) .nav-links a,
+.sticky-header-wrapper:not(.scrolled) .mobile-menu-btn {
     color: white;
 }
 
@@ -1245,6 +1246,19 @@ body.modal-open {
     .timeline,
     .dashboard-grid {
         grid-template-columns: 1fr;
+    }
+
+    .carousel-item .caption p {
+        display: none;
+    }
+
+    .carousel-item .caption h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+
+    .carousel-item .caption {
+        padding: 1.25rem;
     }
 }
 
