@@ -614,12 +614,12 @@ function renderAdminLists() {
                     document.documentElement.removeEventListener('mouseleave', onDocMouseLeave);
                     document.documentElement.removeEventListener('mouseenter', onDocMouseEnter);
 
-                    const newOrderIds = Array.from(docsList.children).map(child => parseInt(child.getAttribute('data-id')));
+                    const newOrderIds = Array.from(docsList.children).map(child => child.getAttribute('data-id'));
 
                     // Update appData.adminDocs locally based on new order
                     const newAdminDocs = [];
                     newOrderIds.forEach(id => {
-                        const doc = appData.adminDocs.find(d => d.id === id);
+                        const doc = appData.adminDocs.find(d => String(d.id) === String(id));
                         if (doc) newAdminDocs.push(doc);
                     });
                     appData.adminDocs = newAdminDocs;
@@ -734,6 +734,9 @@ function renderAdminLists() {
                 officersList._sortable = Sortable.create(officersList, {
                     handle: '.drag-handle',
                     animation: 300,
+                    forceFallback: true,
+                    fallbackClass: "sortable-fallback",
+                    fallbackOnBody: true,
                     onEnd: function () { saveOfficerOrder(); }
                 });
             }
@@ -754,6 +757,9 @@ function renderAdminLists() {
                 advisorsList._sortable = Sortable.create(advisorsList, {
                     handle: '.drag-handle',
                     animation: 300,
+                    forceFallback: true,
+                    fallbackClass: "sortable-fallback",
+                    fallbackOnBody: true,
                     onEnd: function () { saveOfficerOrder(); }
                 });
             }
@@ -761,23 +767,23 @@ function renderAdminLists() {
     }
 
     function saveOfficerOrder() {
-        const oIds = Array.from(officersList?.querySelectorAll('.manage-item') || []).map(child => parseInt(child.getAttribute('data-id')));
-        const aIds = Array.from(advisorsList?.querySelectorAll('.manage-item') || []).map(child => parseInt(child.getAttribute('data-id')));
+        const oIds = Array.from(officersList?.querySelectorAll('.manage-item') || []).map(child => child.getAttribute('data-id'));
+        const aIds = Array.from(advisorsList?.querySelectorAll('.manage-item') || []).map(child => child.getAttribute('data-id'));
         
         const newOrderIds = [...oIds, ...aIds];
         const newOfficers = [];
         newOrderIds.forEach(id => {
-            const off = appData.officers.find(o => o.id === id);
+            const off = appData.officers.find(o => String(o.id) === String(id));
             if (off) newOfficers.push(off);
         });
         
         // Push any remaining officers that weren't in the lists
         appData.officers.forEach(o => {
-            if (!newOrderIds.includes(o.id)) newOfficers.push(o);
+            if (!newOrderIds.includes(String(o.id))) newOfficers.push(o);
         });
 
         appData.officers = newOfficers;
-        appData.officersOrder = appData.officers.map(o => o.id);
+        appData.officersOrder = appData.officers.map(o => String(o.id));
         
         localStorage.setItem('sf_club_data', JSON.stringify(appData));
         saveGlobalState();
