@@ -421,8 +421,11 @@ body.modal-open {
 
 /* Hero Section */
 .hero {
-    padding: 12rem 0 15rem;
-    /* Slightly more height for the group photo */
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10rem 0 8rem;
     text-align: center;
     position: relative;
     border-bottom: 1px solid var(--border-color);
@@ -439,7 +442,7 @@ body.modal-open {
     bottom: 0;
     background-image: linear-gradient(rgba(18, 40, 76, 0.4), transparent 40%), url('images/group.jpg');
     background-size: cover;
-    background-position: center 75%;
+    background-position: center 65%;
     filter: brightness(0.8) contrast(1.1);
     z-index: 0;
 }
@@ -1226,6 +1229,11 @@ body.modal-open {
         padding-bottom: 0;
         border-bottom-color: transparent;
         opacity: 0;
+    }
+
+    .hero {
+        min-height: auto;
+        padding: 8rem 0 6rem;
     }
 
     .hero-title {
