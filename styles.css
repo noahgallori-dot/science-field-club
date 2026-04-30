@@ -1509,13 +1509,18 @@ hr {
 
 @media (max-width: 640px) {
     .dashboard-main-layout {
+        flex-direction: column;
         gap: 0.75rem;
     }
     
     .dashboard-tabs {
-        width: 48px; /* Compact width for icons only */
-        padding-right: 0.5rem;
-        align-items: center;
+        flex-direction: row;
+        width: 100%;
+        padding-right: 0;
+        padding-bottom: 0.5rem;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        justify-content: space-around;
     }
     
     .dashboard-tabs .tab-text {
@@ -1523,10 +1528,11 @@ hr {
     }
     
     .tab-btn {
-        padding: 0.75rem;
+        padding: 0.5rem;
         justify-content: center;
-        width: 100%;
-        border-radius: 8px;
+        width: auto;
+        flex: 1;
+        margin: 0 0.15rem;
     }
 
     .manage-item,
