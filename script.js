@@ -829,25 +829,45 @@ window.deleteSubscriber = async function (idStr) {
 }
 
 function updateTimelineHeader() {
+    const now = new Date();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const currentYear = today.getFullYear();
+
+    // Filter out expired events based on custom thresholds:
+    // - Deadlines: Midnight (start of next day)
+    // - Trips/Meetings: 4:00 PM (16:00)
+    const activeEvents = (appData.calendar || []).filter(event => {
+        const eventDate = parseDate(event.date);
+        const dayOf = new Date(eventDate);
+        dayOf.setHours(0, 0, 0, 0);
+        
+        if (event.type === 'deadline') {
+            const expiry = new Date(dayOf);
+            expiry.setDate(expiry.getDate() + 1);
+            return now < expiry;
+        } else {
+            const expiry = new Date(dayOf);
+            expiry.setHours(16, 0, 0, 0);
+            return now < expiry;
+        }
+    }).sort((a, b) => parseDate(a.date) - parseDate(b.date));
 
     let todaysEvents = [];
     let tomorrowsEvents = [];
     let nextEvent = null;
 
-    appData.calendar.forEach(event => {
+    activeEvents.forEach(event => {
         const eventDate = parseDate(event.date);
-        eventDate.setHours(0, 0, 0, 0);
+        const eventDayStart = new Date(eventDate);
+        eventDayStart.setHours(0, 0, 0, 0);
 
-        if (eventDate.getTime() === today.getTime()) {
+        if (eventDayStart.getTime() === today.getTime()) {
             todaysEvents.push(event.title);
-        } else if (eventDate.getTime() === tomorrow.getTime()) {
+        } else if (eventDayStart.getTime() === tomorrow.getTime()) {
             tomorrowsEvents.push(event.title);
-        } else if (eventDate > today && !nextEvent) {
+        } else if (eventDayStart > today && !nextEvent) {
             nextEvent = event;
         }
     });
@@ -1677,3 +1697,47 @@ window.confirmCrop = function() {
         currentCropper = null;
     }
 }
+
+// Mission Carousel Logic
+let currentSlide = 0;
+const totalSlides = 5;
+let autoSlideInterval;
+
+window.moveCarousel = function(direction) {
+    currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+    updateCarousel();
+    resetAutoSlide();
+}
+
+window.goToSlide = function(index) {
+    currentSlide = index;
+    updateCarousel();
+    resetAutoSlide();
+}
+
+function updateCarousel() {
+    const inner = document.getElementById('mission-carousel-inner');
+    const indicators = document.querySelectorAll('.indicator');
+    
+    if (inner) {
+        inner.style.transform = `translateX(-${currentSlide * 100}%)`;
+    }
+    
+    indicators.forEach((ind, i) => {
+        if (i === currentSlide) ind.classList.add('active');
+        else ind.classList.remove('active');
+    });
+}
+
+function resetAutoSlide() {
+    clearInterval(autoSlideInterval);
+    autoSlideInterval = setInterval(() => {
+        moveCarousel(1);
+    }, 5000);
+}
+
+// Initialize carousel on load
+document.addEventListener('DOMContentLoaded', () => {
+    updateCarousel();
+    resetAutoSlide();
+});
