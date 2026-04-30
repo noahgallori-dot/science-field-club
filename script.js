@@ -77,6 +77,15 @@ const DEFAULT_DATA = {
         { id: 6, name: "Interest Form", url: "https://docs.google.com/spreadsheets/d/1V0ejIHqxnYef7ZuEUBtLGhOsGIRugQqofQxuG4O_Hto/edit?usp=sharing" },
         { id: 7, name: "First Meeting Presentation", url: "https://docs.google.com/presentation/d/12s84I5A0ZbOhKiAsgYjnBPCSwG3t_KbAwZck4Lv3Uts/edit?usp=sharing" },
         { id: 8, name: "Interest Meeting Presentation", url: "https://docs.google.com/presentation/d/13x1XAR4pWUyfpC36oilV68Znv3xxHawhGjjU99IzLYU/edit?usp=sharing" }
+    ],
+    officers: [
+        { id: 1, name: "Noah Allori", role: "President & Founder", email: "noaha2027@banks.k12.or.us", image: "images/noah.jpg", fallbackColor: "12284C", isAdvisor: false },
+        { id: 2, name: "Finan Hailey", role: "Vice President", email: "finanh2028@banks.k12.or.us", image: "images/finan.jpg", fallbackColor: "12284C", isAdvisor: false },
+        { id: 3, name: "Cassidy Acardi", role: "Secretary", email: "cassidya2027@banks.k12.or.us", image: "images/cassidy.jpg", fallbackColor: "12284C", isAdvisor: false },
+        { id: 4, name: "Jane Bollmeier", role: "Fundraising Coordinator", email: "janeb2027@banks.k12.or.us", image: "images/jane.jpg", fallbackColor: "12284C", isAdvisor: false },
+        { id: 5, name: "Dylan McDonald", role: "Treasurer", email: "dylanm2027@banks.k12.or.us", image: "images/dylan.jpg", fallbackColor: "12284C", isAdvisor: false },
+        { id: 6, name: "Mark Anunsen", role: "Media Coordinator", email: "marka2027@banks.k12.or.us", image: "images/mark.jpg", fallbackColor: "12284C", isAdvisor: false },
+        { id: 7, name: "Mr. Richeson", role: "Faculty Advisor", email: "tonyr@banks.k12.or.us", image: "images/richeson.webp", fallbackColor: "EADDca", isAdvisor: true }
     ]
 };
 
@@ -151,6 +160,25 @@ async function loadDataAndSync() {
                 if (savedData?.subscribers) appData.subscribers = savedData.subscribers;
             }
 
+            // 6. PROCESS OFFICERS
+            if (cloudState.officers) {
+                appData.officers = cloudState.officers;
+            } else {
+                const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
+                if (savedData?.officers) appData.officers = savedData.officers;
+            }
+            const savedOfficersOrder = cloudState.officersOrder || (JSON.parse(localStorage.getItem('sf_club_data'))?.officersOrder);
+            if (savedOfficersOrder && appData.officers) {
+                appData.officers = appData.officers.sort((a, b) => {
+                    let indexA = savedOfficersOrder.indexOf(a.id);
+                    let indexB = savedOfficersOrder.indexOf(b.id);
+                    if (indexA === -1) indexA = 9999;
+                    if (indexB === -1) indexB = 9999;
+                    return indexA - indexB;
+                });
+                appData.officersOrder = savedOfficersOrder;
+            }
+
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
         } else {
             console.log("Cloud is empty. Migrating your local data...");
@@ -169,7 +197,9 @@ async function saveGlobalState() {
     // This achieves cross-device sync without requiring new tables or columns.
     const state = {
         subscribers: appData.subscribers || [],
-        adminDocsOrder: appData.adminDocsOrder || []
+        adminDocsOrder: appData.adminDocsOrder || [],
+        officers: appData.officers || [],
+        officersOrder: appData.officersOrder || []
     };
 
     try {
@@ -249,9 +279,90 @@ window.addEventListener('load', checkPreviousSignup);
 function renderAll() {
     renderTimeline();
     renderStudentResources();
+    renderOfficers();
     renderAdminLists();
     updateTimelineHeader();
     if (window.lucide) lucide.createIcons();
+}
+
+function renderOfficers() {
+    const container = document.getElementById('officers-container');
+    if (!container) return;
+
+    if (!appData.officers || appData.officers.length === 0) {
+        container.innerHTML = '';
+        // Do NOT return here, so renderAll can continue to renderAdminLists
+    } else {
+        const regular = appData.officers.filter(o => !o.isAdvisor).slice(0, 6);
+        const advisors = appData.officers.filter(o => o.isAdvisor).slice(0, 3);
+    
+        function groupRegulars(officers) {
+            const len = officers.length;
+            let rows = [];
+            if (len === 0) return rows;
+            if (len === 1) rows = [[0]];
+            else if (len === 2) rows = [[0, 1]];
+            else if (len === 3) rows = [[0, 1, 2]];
+            else if (len === 4) rows = [[0, 1], [2, 3]];
+            else if (len === 5) rows = [[0, 1, 2], [3, 4]];
+            else if (len === 6) rows = [[0, 1, 2], [3, 4, 5]];
+            else {
+                let i = 0;
+                let rem = len % 3;
+                if (rem === 1) rows.push([i++]);
+                else if (rem === 2) rows.push([i++, i++]);
+                while (i < len) rows.push([i++, i++, i++]);
+            }
+            return rows.map(r => r.map(idx => officers[idx]));
+        }
+    
+        const regGroups = groupRegulars(regular);
+    
+        let html = '';
+        
+        for (const group of regGroups) {
+            html += `<div class="officer-row">`;
+            for (const officer of group) {
+                html += renderOfficerCardHTML(officer);
+            }
+            html += `</div>`;
+        }
+    
+        if (advisors.length > 0) {
+            html += `<div style="margin-top: 3rem;">`;
+            html += `<div class="officer-row">`;
+            for (const adv of advisors) {
+                html += renderOfficerCardHTML(adv);
+            }
+            html += `</div></div>`;
+        }
+    
+        container.innerHTML = html;
+    }
+}
+
+function renderOfficerCardHTML(officer) {
+    const fallbackInitials = officer.name.replace(/\s+/g, '+');
+    const fallbackBg = officer.fallbackColor || (officer.isAdvisor ? 'EADDca' : '12284C');
+    const fallbackColor = officer.isAdvisor && !officer.fallbackColor ? '12284C' : 'fff';
+    const fallbackUrl = `https://ui-avatars.com/api/?name=${fallbackInitials}&background=${fallbackBg}&color=${fallbackColor}&size=128`;
+    
+    const advisorClass = officer.isAdvisor ? 'advisor-card' : '';
+    const advisorStyle = officer.isAdvisor ? 'border: 2px solid var(--primary);' : '';
+    
+    return `
+        <div class="officer-card card-white shadow-hover ${advisorClass}" style="${advisorStyle}">
+            <img src="${officer.image || fallbackUrl}" alt="${officer.name}" class="officer-img"
+                onerror="this.src='${fallbackUrl}'">
+            <div class="officer-info">
+                <h4>${officer.name}</h4>
+                <div class="officer-role">${officer.role}</div>
+                <a onclick="copyEmail('${officer.email}', this)" class="officer-email"
+                    style="cursor: pointer;"><i data-lucide="mail"></i>
+                    <span>${officer.email}</span></a>
+            </div>
+        </div>
+    `;
 }
 
 function renderTimeline() {
@@ -580,6 +691,100 @@ function renderAdminLists() {
             `).join('');
         }
     }
+
+    // Admin Officers List
+    const officersList = document.getElementById('admin-officers-list');
+    const advisorsList = document.getElementById('admin-advisors-list');
+    
+    const allOfficers = appData.officers || [];
+    const regular = allOfficers.filter(o => !o.isAdvisor);
+    const advs = allOfficers.filter(o => o.isAdvisor);
+
+    function createOfficerManageItem(officer) {
+        const fallbackBg = officer.fallbackColor || (officer.isAdvisor ? 'EADDca' : '12284C');
+        const fallbackColor = officer.isAdvisor && !officer.fallbackColor ? '12284C' : 'fff';
+        const fallbackUrl = `https://ui-avatars.com/api/?name=${officer.name.replace(/\s+/g, '+')}&background=${fallbackBg}&color=${fallbackColor}`;
+        return `
+        <div class="manage-item card-item" data-id="${officer.id}" style="padding: 0.75rem;">
+            <div class="drag-handle" style="cursor: grab; margin-right: 0.5rem; color: var(--text-muted);"><i data-lucide="grip-vertical"></i></div>
+            <img src="${officer.image || fallbackUrl}" onerror="this.src='${fallbackUrl}'" style="width:40px; height:40px; border-radius:50%; object-fit:cover; margin-right:10px; flex-shrink:0;">
+            <div class="item-info" style="flex: 1;">
+                <strong style="color: var(--primary);">${officer.name}</strong>
+                <div class="item-meta">${officer.role} • ${officer.email}</div>
+            </div>
+            <div class="item-actions">
+                <button class="icon-btn" onclick="editOfficer('${officer.id}')"><i data-lucide="edit-3"></i></button>
+                <button class="icon-btn danger" onclick="deleteOfficer('${officer.id}')"><i data-lucide="trash-2"></i></button>
+            </div>
+        </div>
+        `;
+    }
+
+    if (officersList) {
+        if (regular.length === 0) {
+            if (officersList._sortable) {
+                officersList._sortable.destroy();
+                officersList._sortable = null;
+            }
+            officersList.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 1rem; border: 1px dashed var(--border-color); border-radius: 8px;">No student officers yet.</div>`;
+        } else {
+            officersList.innerHTML = regular.map(createOfficerManageItem).join('');
+            if (window.Sortable) {
+                if (officersList._sortable) officersList._sortable.destroy();
+                officersList._sortable = Sortable.create(officersList, {
+                    handle: '.drag-handle',
+                    animation: 300,
+                    onEnd: function () { saveOfficerOrder(); }
+                });
+            }
+        }
+    }
+
+    if (advisorsList) {
+        if (advs.length === 0) {
+            if (advisorsList._sortable) {
+                advisorsList._sortable.destroy();
+                advisorsList._sortable = null;
+            }
+            advisorsList.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 1rem; border: 1px dashed var(--border-color); border-radius: 8px;">No faculty advisors yet.</div>`;
+        } else {
+            advisorsList.innerHTML = advs.map(createOfficerManageItem).join('');
+            if (window.Sortable) {
+                if (advisorsList._sortable) advisorsList._sortable.destroy();
+                advisorsList._sortable = Sortable.create(advisorsList, {
+                    handle: '.drag-handle',
+                    animation: 300,
+                    onEnd: function () { saveOfficerOrder(); }
+                });
+            }
+        }
+    }
+
+    function saveOfficerOrder() {
+        const oIds = Array.from(officersList?.querySelectorAll('.manage-item') || []).map(child => parseInt(child.getAttribute('data-id')));
+        const aIds = Array.from(advisorsList?.querySelectorAll('.manage-item') || []).map(child => parseInt(child.getAttribute('data-id')));
+        
+        const newOrderIds = [...oIds, ...aIds];
+        const newOfficers = [];
+        newOrderIds.forEach(id => {
+            const off = appData.officers.find(o => o.id === id);
+            if (off) newOfficers.push(off);
+        });
+        
+        // Push any remaining officers that weren't in the lists
+        appData.officers.forEach(o => {
+            if (!newOrderIds.includes(o.id)) newOfficers.push(o);
+        });
+
+        appData.officers = newOfficers;
+        appData.officersOrder = appData.officers.map(o => o.id);
+        
+        localStorage.setItem('sf_club_data', JSON.stringify(appData));
+        saveGlobalState();
+        renderOfficers();
+    }
+    
+    if (window.lucide) lucide.createIcons();
 }
 
 window.copyAllSubscribers = function () {
@@ -978,6 +1183,30 @@ window.handleFormSubmit = async function (e) {
                 const res = await supabaseClient.from('resources').insert(resource);
                 error = res.error;
             }
+        } else if (currentEditType === 'officer') {
+            const officer = {
+                id: currentEditId || Date.now(),
+                name: data.name,
+                role: data.role,
+                email: data.email,
+                image: data.image,
+                isAdvisor: data.isAdvisor === 'on'
+            };
+            if (!appData.officers) appData.officers = [];
+            
+            if (currentEditId) {
+                const idx = appData.officers.findIndex(o => String(o.id) === String(currentEditId));
+                if (idx !== -1) appData.officers[idx] = officer;
+            } else {
+                appData.officers.push(officer);
+            }
+            
+            localStorage.setItem('sf_club_data', JSON.stringify(appData));
+            await saveGlobalState();
+            closeFormModal();
+            renderOfficers();
+            renderAdminLists();
+            return; // Return early because we don't use Supabase table logic
         }
 
         if (error) throw error;
@@ -1266,3 +1495,185 @@ if (reminderForm) {
 
 // Initial Render
 renderAll();
+
+// OFFICERS
+window.showAddOfficerForm = function () {
+    currentEditType = 'officer';
+    openFormModal('Add Officer', getOfficerFields());
+}
+
+window.editOfficer = function (id) {
+    const officer = appData.officers.find(o => String(o.id) === String(id));
+    currentEditType = 'officer';
+    currentEditId = id;
+    openFormModal('Edit Officer', getOfficerFields(officer));
+}
+
+window.deleteOfficer = async function (id) {
+    if (confirm('Are you sure you want to remove this officer?')) {
+        const idStr = String(id);
+        appData.officers = appData.officers.filter(o => String(o.id) !== idStr);
+        if (appData.officersOrder) {
+            appData.officersOrder = appData.officersOrder.filter(oid => String(oid) !== idStr);
+        }
+        localStorage.setItem('sf_club_data', JSON.stringify(appData));
+        await saveGlobalState();
+        renderAll();
+    }
+}
+
+window.removeOfficerPhoto = function() {
+    document.getElementById('officer-image-b64').value = '';
+    document.getElementById('photo-trash-btn').style.display = 'none';
+    updateOfficerPreviewFallback();
+}
+
+window.updateOfficerPreviewFallback = function() {
+    const nameInput = document.querySelector('input[name="name"]');
+    const b64 = document.getElementById('officer-image-b64')?.value;
+    const previewCircle = document.getElementById('photo-preview-circle');
+    const chooseBtnContainer = document.getElementById('choose-image-container');
+    
+    if (!previewCircle) return;
+    
+    if (b64 && b64.length > 0) {
+        if (previewCircle.dataset.current !== 'b64') {
+            previewCircle.innerHTML = `<img src="${b64}" class="animate-fade-in" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            previewCircle.dataset.current = 'b64';
+        }
+        const trashBtn = document.getElementById('photo-trash-btn');
+        if (trashBtn) trashBtn.style.display = 'flex';
+        if (chooseBtnContainer) chooseBtnContainer.classList.remove('expanded');
+        return;
+    }
+    
+    const trashBtn = document.getElementById('photo-trash-btn');
+    if (trashBtn) trashBtn.style.display = 'none';
+    if (chooseBtnContainer) chooseBtnContainer.classList.add('expanded');
+    
+    if (nameInput && nameInput.value.trim().length > 0) {
+        const currentName = nameInput.value.trim();
+        const initialsUrl = `https://ui-avatars.com/api/?name=${currentName.replace(/\s+/g, '+')}&background=12284C&color=fff&size=128`;
+        if (previewCircle.dataset.current !== currentName) {
+            previewCircle.innerHTML = `<img src="${initialsUrl}" class="animate-fade-in" style="width: 100%; height: 100%; border-radius: 50%;">`;
+            previewCircle.dataset.current = currentName;
+        }
+    } else {
+        if (previewCircle.dataset.current !== 'camera') {
+            previewCircle.innerHTML = `<i data-lucide="camera" class="animate-fade-in" style="width: 40px; height: 40px; color: #94a3b8;"></i>`;
+            previewCircle.dataset.current = 'camera';
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+function getOfficerFields(data = {}) {
+    let defaultPreview = '';
+    if (data.image) {
+        defaultPreview = `<img src="${data.image}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+    } else if (data.name) {
+        defaultPreview = `<img src="https://ui-avatars.com/api/?name=${data.name.replace(/\s+/g, '+')}&background=12284C&color=fff&size=128" style="width: 100%; height: 100%; border-radius: 50%;">`;
+    } else {
+        defaultPreview = `<i data-lucide="camera" style="width: 40px; height: 40px; color: #94a3b8;"></i>`;
+    }
+
+    return `
+        <div class="form-group" style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="position: relative; display: inline-block;">
+                <div id="photo-preview-circle" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--primary); padding: 3px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; margin: 0 auto;">
+                    ${defaultPreview}
+                </div>
+                
+                <div id="photo-trash-btn" style="display: ${data.image ? 'flex' : 'none'}; position: absolute; bottom: 0; right: 0; background: var(--primary); color: white; width: 28px; height: 28px; border-radius: 50%; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" onclick="removeOfficerPhoto()">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                </div>
+            </div>
+            
+            <div id="choose-image-container" class="smooth-collapse mt-3 ${data.image ? '' : 'expanded'}">
+                <label for="officer-photo-upload" class="btn btn-sm btn-navy" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin: 0;">
+                    <i data-lucide="upload" style="width:16px;height:16px;margin-right:6px;"></i> Choose Image
+                </label>
+                <input type="file" id="officer-photo-upload" accept="image/*" style="display:none;" onchange="handleOfficerPhoto(this)">
+            </div>
+            
+            <input type="hidden" name="image" id="officer-image-b64" value="${data.image || ''}">
+            
+            <div id="crop-container" class="smooth-collapse mt-4" style="text-align: left;">
+                <div style="max-width: 100%; max-height: 300px; margin-bottom: 1rem;">
+                    <img id="crop-image" style="max-width: 100%; display: block;">
+                </div>
+                <div style="text-align: right;">
+                    <button type="button" class="btn btn-sm btn-navy" onclick="confirmCrop()">Crop & Save</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" name="name" value="${data.name || ''}" class="form-control" required placeholder="John Doe" oninput="updateOfficerPreviewFallback()" autocomplete="off">
+        </div>
+        <div class="form-group" style="margin-top:1rem">
+            <label>Role</label>
+            <input type="text" name="role" value="${data.role || ''}" class="form-control" required placeholder="President" autocomplete="off">
+        </div>
+        <div class="form-group" style="margin-top:1rem">
+            <label>Email</label>
+            <input type="email" name="email" value="${data.email || ''}" class="form-control" required placeholder="email@banks.k12.or.us" autocomplete="off">
+        </div>
+        <div class="form-group" style="margin-top:1.5rem">
+            <label class="custom-checkbox">
+                <input type="checkbox" name="isAdvisor" ${data.isAdvisor ? 'checked' : ''}>
+                Is Faculty Advisor
+            </label>
+        </div>
+    `;
+}
+
+let currentCropper = null;
+
+window.handleOfficerPhoto = function(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const cropContainer = document.getElementById('crop-container');
+            const cropImage = document.getElementById('crop-image');
+            
+            cropContainer.classList.add('expanded');
+            cropImage.src = e.target.result;
+            
+            if (currentCropper) {
+                currentCropper.destroy();
+            }
+            
+            currentCropper = new Cropper(cropImage, {
+                aspectRatio: 1,
+                viewMode: 1,
+                minCropBoxWidth: 100,
+                minCropBoxHeight: 100,
+            });
+        }
+        reader.readAsDataURL(file);
+        
+        input.value = '';
+    }
+}
+
+window.confirmCrop = function() {
+    if (currentCropper) {
+        const canvas = currentCropper.getCroppedCanvas({
+            width: 400,
+            height: 400
+        });
+        const b64 = canvas.toDataURL('image/jpeg', 0.8);
+        document.getElementById('officer-image-b64').value = b64;
+        
+        document.getElementById('crop-container').classList.remove('expanded');
+        
+        updateOfficerPreviewFallback();
+        
+        currentCropper.destroy();
+        currentCropper = null;
+    }
+}
