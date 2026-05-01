@@ -52,7 +52,7 @@ const DEFAULT_DATA = {
         {
             id: 2,
             title: "Trip Team Slides",
-            description: "View the presentations put together by our Trip Teams!",
+            description: "Access the shared slide set for our trips. Add your slides here—please do not create separate files!",
             icon: "monitor",
             links: [{ name: "OMSI Slides", url: "https://docs.google.com/presentation/d/1hOb-dfVeICpN3nH9uDsAseyEgZs8CTmS5dgkLcA0sn8/edit?usp=sharing" }]
         },
@@ -1746,4 +1746,93 @@ function resetAutoSlide() {
 document.addEventListener('DOMContentLoaded', () => {
     updateCarousel();
     resetAutoSlide();
+});
+// --- CHAT WIDGET LOGIC ---
+document.addEventListener('DOMContentLoaded', () => {
+    const chatToggle = document.getElementById('chat-toggle');
+    const chatWindow = document.getElementById('chat-window');
+    const chatForm = document.getElementById('chat-form');
+    const chatSuccess = document.getElementById('chat-success');
+    const openIcon = document.querySelector('.chat-icon-open');
+    const closeIcon = document.querySelector('.chat-icon-close');
+    const chatWidget = document.getElementById('chat-widget');
+
+    if (!chatToggle || !chatWindow || !chatWidget) return;
+
+    const toggleChat = (forceClose = false) => {
+        const isClosing = forceClose || chatWindow.style.display === 'flex';
+        
+        if (!isClosing) {
+            chatWindow.style.display = 'flex';
+            chatWindow.classList.remove('closing');
+            openIcon.style.display = 'none';
+            closeIcon.style.display = 'block';
+            chatForm.style.display = 'block';
+            chatSuccess.style.display = 'none';
+            chatSuccess.classList.remove('chat-success-pop');
+        } else if (chatWindow.style.display === 'flex') {
+            chatWindow.classList.add('closing');
+            openIcon.style.display = 'block';
+            closeIcon.style.display = 'none';
+            // Wait for the closing animation to finish before hiding
+            setTimeout(() => {
+                chatWindow.style.display = 'none';
+                chatWindow.classList.remove('closing');
+            }, 200);
+        }
+    };
+
+    chatToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleChat();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!chatWidget.contains(e.target) && chatWindow.style.display === 'flex') {
+            toggleChat(true);
+        }
+    });
+
+    if (chatForm) {
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('chat-submit-btn');
+            const submitSpan = submitBtn.querySelector('span');
+            const originalText = submitSpan ? submitSpan.innerText : submitBtn.innerText;
+            if (submitSpan) submitSpan.innerText = 'Sending...';
+            else submitBtn.innerText = 'Sending...';
+            submitBtn.disabled = true;
+
+            const templateParams = {
+                first_name: document.getElementById('chat-first-name').value,
+                last_name: document.getElementById('chat-last-name').value,
+                email: document.getElementById('chat-email').value,
+                message: document.getElementById('chat-message').value,
+                to_name: "Science Field Club Leadership"
+            };
+
+            try {
+                // EmailJS Credentials provided by USER
+                await emailjs.send(
+                    'service_zjs4xto', 
+                    'template_cm9wv1k', 
+                    templateParams,
+                    'qe_Z_EwImCbqDDLfJ'
+                );
+                
+                chatForm.style.display = 'none';
+                chatSuccess.style.display = 'block';
+                
+                chatForm.reset();
+            } catch (error) {
+                console.error('EmailJS Error:', error);
+                alert('Oops! Something went wrong while sending your message. Please try again later.');
+            } finally {
+                if (submitSpan) submitSpan.innerText = originalText;
+                else submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
 });

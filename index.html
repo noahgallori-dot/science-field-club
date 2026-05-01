@@ -48,7 +48,7 @@
                     <div class="nav-links">
                         <a href="#about">About</a>
                         <a href="#events">Schedule</a>
-                        <a href="#resources">Student Resources</a>
+                        <a href="#resources">Resources</a>
                         <a href="#trip-teams">Trip Teams</a>
                         <a href="#officers">Officers</a>
                         <a href="#" onclick="openAdmin(); event.preventDefault();" class="mobile-login-link">Officer
@@ -231,8 +231,7 @@
         <div class="container">
             <div class="section-header">
                 <h2>Trip Teams</h2>
-                <p class="section-desc">We use Trip Teams to keep everyone engaged and learning. Roles are refreshed for
-                    every trip to keep things new.</p>
+                <p class="section-desc">We use Trip Teams to keep everyone engaged and learning. Access the shared slide set in <strong>Student Resources</strong>—please do not create separate files!</p>
             </div>
 
             <div class="grid-3 mb-4">
@@ -480,13 +479,60 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>
         (function () {
-            emailjs.init("W3ns6jMkHbfgnmWK9");
+            emailjs.init({
+                publicKey: "qe_Z_EwImCbqDDLfJ"
+            });
         })();
     </script>
     <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- SortableJS Library -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- Contact Chat Widget -->
+    <div id="chat-widget" class="chat-widget">
+        <div id="chat-window" class="chat-window">
+            <div class="chat-header">
+                <i data-lucide="message-circle"></i>
+                <div class="chat-header-text">
+                    <span class="chat-title">Contact Us</span>
+                </div>
+            </div>
+            <div class="chat-body">
+                <form id="chat-form" class="standard-chat-form">
+                    <div class="chat-greeting">
+                        <p>Have a question or want to join? Send us a message!</p>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-first-name" class="form-control" placeholder="First Name" required>
+                        <input type="text" id="chat-last-name" class="form-control" placeholder="Last Name" required>
+                    </div>
+                    <div class="chat-input-group">
+                        <input type="email" id="chat-email" class="form-control" placeholder="Email Address" required>
+                    </div>
+                    <div class="chat-input-group">
+                        <textarea id="chat-message" class="form-control" placeholder="Your Question or Comment..." required rows="3"></textarea>
+                    </div>
+                    <button type="submit" id="chat-submit-btn" class="btn btn-navy modern-chat-btn">
+                        <span>Send Message</span>
+                        <i data-lucide="send" class="send-icon"></i>
+                    </button>
+                </form>
+                <div id="chat-success" class="chat-success-container" style="display: none;">
+                    <div class="success-animation">
+                        <div class="success-circle"></div>
+                        <i data-lucide="check" class="success-icon"></i>
+                    </div>
+                    <p class="success-title">Message Sent!</p>
+                    <p class="success-desc">Thanks for reaching out. We'll be in touch shortly.</p>
+                </div>
+            </div>
+        </div>
+        <button id="chat-toggle" class="chat-toggle" aria-label="Toggle Contact Chat">
+            <i data-lucide="message-circle" class="chat-icon-open"></i>
+            <i data-lucide="x" class="chat-icon-close" style="display: none;"></i>
+        </button>
+    </div>
+
     <script src="script.js"></script>
 </body>
 
