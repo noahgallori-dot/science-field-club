@@ -1585,6 +1585,7 @@ body.modal-open {
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 20px 40px rgba(18, 40, 76, 0.15);
+    background: #000; /* Prevent any sub-pixel gaps from showing as gray */
 }
 
 .carousel-inner {
@@ -1602,6 +1603,7 @@ body.modal-open {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block; /* Remove potential inline gap at bottom */
 }
 
 .carousel-item .caption {
@@ -1609,8 +1611,8 @@ body.modal-open {
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 2rem;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    padding: 3rem 2rem 2.5rem; /* More balanced padding */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
     color: white;
     font-family: var(--font-heading);
 }

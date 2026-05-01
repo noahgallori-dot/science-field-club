@@ -1736,16 +1736,40 @@ function updateCarousel() {
 }
 
 function resetAutoSlide() {
-    clearInterval(autoSlideInterval);
+    stopAutoSlide();
+    startAutoSlide();
+}
+
+function startAutoSlide() {
+    if (autoSlideInterval) return;
     autoSlideInterval = setInterval(() => {
         moveCarousel(1);
     }, 5000);
 }
 
-// Initialize carousel on load
+function stopAutoSlide() {
+    clearInterval(autoSlideInterval);
+    autoSlideInterval = null;
+}
+
+// Initialize carousel with Intersection Observer
 document.addEventListener('DOMContentLoaded', () => {
     updateCarousel();
-    resetAutoSlide();
+    
+    const carouselSection = document.querySelector('.mission-carousel');
+    if (carouselSection) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    startAutoSlide();
+                } else {
+                    stopAutoSlide();
+                }
+            });
+        }, { threshold: 0.2 }); // Trigger when 20% of the carousel is visible
+        
+        observer.observe(carouselSection);
+    }
 });
 // --- CHAT WIDGET LOGIC ---
 document.addEventListener('DOMContentLoaded', () => {
