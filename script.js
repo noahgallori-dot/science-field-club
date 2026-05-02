@@ -137,9 +137,10 @@ async function loadDataAndSync() {
             const savedOrder = cloudState.adminDocsOrder || (JSON.parse(localStorage.getItem('sf_club_data'))?.adminDocsOrder);
 
             if (savedOrder) {
+                const stringOrder = savedOrder.map(String);
                 appData.adminDocs = uniqueDocs.sort((a, b) => {
-                    let indexA = savedOrder.indexOf(a.id);
-                    let indexB = savedOrder.indexOf(b.id);
+                    let indexA = stringOrder.indexOf(String(a.id));
+                    let indexB = stringOrder.indexOf(String(b.id));
                     if (indexA === -1) indexA = 9999;
                     if (indexB === -1) indexB = 9999;
                     return indexA - indexB;
@@ -169,9 +170,10 @@ async function loadDataAndSync() {
             }
             const savedOfficersOrder = cloudState.officersOrder || (JSON.parse(localStorage.getItem('sf_club_data'))?.officersOrder);
             if (savedOfficersOrder && appData.officers) {
+                const stringOfficersOrder = savedOfficersOrder.map(String);
                 appData.officers = appData.officers.sort((a, b) => {
-                    let indexA = savedOfficersOrder.indexOf(a.id);
-                    let indexB = savedOfficersOrder.indexOf(b.id);
+                    let indexA = stringOfficersOrder.indexOf(String(a.id));
+                    let indexB = stringOfficersOrder.indexOf(String(b.id));
                     if (indexA === -1) indexA = 9999;
                     if (indexB === -1) indexB = 9999;
                     return indexA - indexB;
@@ -192,6 +194,15 @@ async function loadDataAndSync() {
     }
 }
 
+let pendingCloudSaves = 0;
+window.addEventListener('beforeunload', (e) => {
+    if (pendingCloudSaves > 0) {
+        e.preventDefault();
+        e.returnValue = "Changes are still saving to the cloud. Are you sure you want to leave?";
+        return e.returnValue;
+    }
+});
+
 async function saveGlobalState() {
     // This function packs subscribers and ordering into a single row in the existing docs table
     // This achieves cross-device sync without requiring new tables or columns.
@@ -202,6 +213,7 @@ async function saveGlobalState() {
         officersOrder: appData.officersOrder || []
     };
 
+    pendingCloudSaves++;
     try {
         const { data: existing } = await supabaseClient.from('admin_docs').select('id').eq('name', '_INTERNAL_STATE_').single();
 
@@ -212,6 +224,8 @@ async function saveGlobalState() {
         }
     } catch (err) {
         console.warn("Failed to save global state to cloud", err);
+    } finally {
+        pendingCloudSaves--;
     }
 }
 
@@ -803,6 +817,7 @@ window.copyAllSubscribers = function () {
 
 window.deleteSubscriber = async function (idStr) {
     if (confirm('Remove this subscriber?')) {
+        pendingCloudSaves++;
         try {
             // Optimistic UI: Remove from DOM immediately to prevent flash
             const row = document.querySelector(`#admin-subscribers-list [data-id="${idStr}"]`);
@@ -830,6 +845,8 @@ window.deleteSubscriber = async function (idStr) {
         } catch (err) {
             console.error("Error deleting subscriber:", err);
             renderAdminLists(); // Revert on failure
+        } finally {
+            pendingCloudSaves--;
         }
     }
 }
@@ -1160,6 +1177,7 @@ window.handleFormSubmit = async function (e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
+    pendingCloudSaves++;
     try {
         let error;
         if (currentEditType === 'adminDoc') {
@@ -1243,6 +1261,8 @@ window.handleFormSubmit = async function (e) {
     } catch (err) {
         console.error("Supabase Error:", err);
         alert("Failed to save: " + (err.message || "Unknown error"));
+    } finally {
+        pendingCloudSaves--;
     }
 }
 
@@ -1279,11 +1299,14 @@ window.editDoc = function (id) {
 
 window.deleteDoc = async function (id) {
     if (confirm('Are you sure you want to remove this link?')) {
+        pendingCloudSaves++;
         try {
             await supabaseClient.from('admin_docs').delete().eq('id', id);
             await loadDataAndSync();
         } catch (err) {
             console.error("Error deleting doc:", err);
+        } finally {
+            pendingCloudSaves--;
         }
     }
 }
@@ -1303,11 +1326,14 @@ window.editEvent = function (id) {
 
 window.deleteEvent = async function (id) {
     if (confirm('Remove this event?')) {
+        pendingCloudSaves++;
         try {
             await supabaseClient.from('calendar').delete().eq('id', id);
             await loadDataAndSync();
         } catch (err) {
             console.error("Error deleting event:", err);
+        } finally {
+            pendingCloudSaves--;
         }
     }
 }
@@ -1537,14 +1563,19 @@ window.editOfficer = function (id) {
 
 window.deleteOfficer = async function (id) {
     if (confirm('Are you sure you want to remove this officer?')) {
-        const idStr = String(id);
-        appData.officers = appData.officers.filter(o => String(o.id) !== idStr);
-        if (appData.officersOrder) {
-            appData.officersOrder = appData.officersOrder.filter(oid => String(oid) !== idStr);
+        pendingCloudSaves++;
+        try {
+            const idStr = String(id);
+            appData.officers = appData.officers.filter(o => String(o.id) !== idStr);
+            if (appData.officersOrder) {
+                appData.officersOrder = appData.officersOrder.filter(oid => String(oid) !== idStr);
+            }
+            localStorage.setItem('sf_club_data', JSON.stringify(appData));
+            await saveGlobalState();
+            renderAll();
+        } finally {
+            pendingCloudSaves--;
         }
-        localStorage.setItem('sf_club_data', JSON.stringify(appData));
-        await saveGlobalState();
-        renderAll();
     }
 }
 
