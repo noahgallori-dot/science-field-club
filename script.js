@@ -1484,7 +1484,7 @@ if (reminderForm) {
                 time: now.toLocaleTimeString()
             };
             if (typeof emailjs !== 'undefined') {
-                emailjs.send('service_eosubks', 'template_pycgjtk', emailParams);
+                emailjs.send('service_eosubks', 'template_pycgjtk', emailParams, 'W3ns6jMkHbfgnmWK9');
             }
         } catch(err) {
             console.error("EmailJS error:", err);
