@@ -1013,7 +1013,7 @@ body.modal-open {
     padding: 0.75rem 1rem;
     border: 2px solid var(--border-color);
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 16px; /* 16px prevents iOS zoom on focus */
     font-family: var(--font-body);
     transition: border-color 0.2s;
     color: var(--text-heading);
@@ -2154,7 +2154,7 @@ hr {
     border-radius: 8px;
     border-width: 1px;
     padding: 0.65rem 0.9rem;
-    font-size: 0.95rem;
+    font-size: 16px; /* 16px prevents iOS zoom on focus */
     width: 100%;
 }
 
