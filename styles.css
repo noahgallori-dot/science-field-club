@@ -665,6 +665,9 @@ body.modal-open {
     font-size: 0.95rem;
     margin-bottom: 1.5rem;
     flex-grow: 1;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    overflow-wrap: break-word;
 }
 
 .read-more {
@@ -1854,6 +1857,11 @@ hr {
     -webkit-overflow-scrolling: touch;
 }
 
+/* Hide scrollbars during modal height animations to prevent jank */
+.admin-modal-content.is-animating .manage-list {
+    overflow-y: hidden !important;
+}
+
 .manage-list::-webkit-scrollbar {
     display: block !important;
     width: 6px;
@@ -2051,6 +2059,18 @@ hr {
     transform: scale(1.05) translateY(-2px);
     background: var(--primary-hover);
     box-shadow: 0 15px 30px rgba(18, 40, 76, 0.4);
+}
+
+/* Inversion when overlapping footer */
+.chat-widget.inverted .chat-toggle {
+    background: #ffffff;
+    color: var(--primary);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.chat-widget.inverted .chat-toggle:hover {
+    background: #f8fafc;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
 }
 
 .chat-toggle i {
@@ -2263,6 +2283,15 @@ textarea.form-control {
     color: var(--text-muted);
     font-size: 0.95rem;
     line-height: 1.5;
+}
+
+.item-info,
+.item-meta,
+.manage-item,
+.timeline-content p {
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    overflow-wrap: break-word;
 }
 
 @media (max-width: 480px) {

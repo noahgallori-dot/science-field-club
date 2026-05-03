@@ -696,7 +696,10 @@ function renderAdminLists() {
                 <div class="manage-item card-item" style="padding: 0.75rem 1rem;" data-id="${sub.id || sub.phone}">
                     <div class="item-info">
                         <strong style="color: var(--primary);">${sub.name}</strong>
-                        <div style="font-family: monospace; font-size: 0.95rem; margin-top: 0.2rem;">${sub.phone}</div>
+                        <div onclick="copyText('${sub.phone}', this)" style="font-family: var(--font-body); font-size: 0.95rem; margin-top: 0.35rem; cursor: pointer; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s;" title="Click to copy" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">
+                            <i data-lucide="copy" style="width: 14px; height: 14px; opacity: 0.5;"></i>
+                            <span>${sub.phone}</span>
+                        </div>
                     </div>
                     <div class="item-actions">
                         <button class="icon-btn danger" onclick="deleteSubscriber(${sub.id ? sub.id : `'${sub.phone}'`})"><i data-lucide="trash-2"></i></button>
@@ -722,9 +725,10 @@ function renderAdminLists() {
         <div class="manage-item card-item" data-id="${officer.id}" style="padding: 0.75rem;">
             <div class="drag-handle" style="cursor: grab; margin-right: 0.5rem; color: var(--text-muted);"><i data-lucide="grip-vertical"></i></div>
             <img src="${officer.image || fallbackUrl}" onerror="this.src='${fallbackUrl}'" style="width:40px; height:40px; border-radius:50%; object-fit:cover; margin-right:10px; flex-shrink:0;">
-            <div class="item-info" style="flex: 1;">
-                <strong style="color: var(--primary);">${officer.name}</strong>
-                <div class="item-meta">${officer.role} • ${officer.email}</div>
+            <div class="item-info" style="flex: 1; display: flex; flex-direction: column; gap: 0rem; line-height: 1.2;">
+                <strong style="color: var(--primary); font-size: 1rem; margin-bottom: 0.1rem;">${officer.name}</strong>
+                <div class="item-meta" style="font-size: 0.85rem; color: var(--text-muted);">${officer.role}</div>
+                <div class="item-meta" style="font-size: 0.85rem; color: var(--text-muted); opacity: 0.7;">${officer.email}</div>
             </div>
             <div class="item-actions">
                 <button class="icon-btn" onclick="editOfficer('${officer.id}')"><i data-lucide="edit-3"></i></button>
@@ -807,11 +811,78 @@ function renderAdminLists() {
     if (window.lucide) lucide.createIcons();
 }
 
-window.copyAllSubscribers = function () {
+window.copyAllSubscribers = function (btn) {
     if (!appData.subscribers || appData.subscribers.length === 0) return;
-    const list = appData.subscribers.map(s => `${s.name}\\t${s.phone}`).join('\\n');
+    const list = appData.subscribers.map(s => `${s.name}\t${s.phone}`).join('\n');
     navigator.clipboard.writeText(list).then(() => {
-        alert("Copied " + appData.subscribers.length + " subscribers to clipboard!");
+        // Use getBoundingClientRect for sub-pixel precision to prevent 1-2px jumps
+        const rect = btn.getBoundingClientRect();
+        const originalTransition = btn.style.transition;
+        
+        btn.style.transition = 'none';
+        btn.style.width = rect.width + 'px';
+        btn.style.height = rect.height + 'px';
+        btn.style.overflow = 'hidden';
+        
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px; margin-right: 8px;"></i>Copied!';
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.style.width = '';
+            btn.style.height = ''; 
+            btn.style.overflow = '';
+            btn.style.transition = originalTransition;
+            if (window.lucide) window.lucide.createIcons();
+        }, 1500);
+    });
+}
+
+window.exportSubscribersCSV = function() {
+    if (!appData.subscribers || appData.subscribers.length === 0) {
+        alert("No subscribers to export.");
+        return;
+    }
+    
+    // Create CSV content
+    const header = "Name,Phone\n";
+    const rows = appData.subscribers.map(s => `"${s.name}","${s.phone}"`).join("\n");
+    const csvContent = header + rows;
+    
+    // Create a Blob and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "subscribers.csv");
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+window.copyText = function(text, element) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalHtml = element.innerHTML;
+        const rect = element.getBoundingClientRect();
+        const originalTransition = element.style.transition;
+        
+        // Lock both dimensions with sub-pixel precision and disable transitions
+        element.style.transition = 'none';
+        element.style.width = rect.width + 'px';
+        element.style.height = rect.height + 'px';
+        element.style.overflow = 'hidden';
+
+        element.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px; color: #16a34a; margin-right: 6px;"></i>Copied!';
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => {
+            element.innerHTML = originalHtml;
+            element.style.width = '';
+            element.style.height = '';
+            element.style.overflow = '';
+            element.style.transition = originalTransition;
+            if (window.lucide) window.lucide.createIcons();
+        }, 1500);
     });
 }
 
@@ -1081,6 +1152,7 @@ window.switchTab = function (tabId) {
     modalContent.style.transition = 'none';
     modalContent.style.height = oldHeight + 'px';
     modalContent.style.overflow = 'hidden';
+    modalContent.classList.add('is-animating');
 
     // Update buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1115,6 +1187,7 @@ window.switchTab = function (tabId) {
             setTimeout(() => {
                 modalContent.style.height = 'auto';
                 modalContent.style.overflow = 'auto'; // Restore scroll if needed
+                modalContent.classList.remove('is-animating');
             }, 450);
         });
     });
@@ -1133,10 +1206,14 @@ function copyEmail(email, element) {
     navigator.clipboard.writeText(email).then(() => {
         const span = element.querySelector('span');
         const originalText = span.innerText;
+        const rect = element.getBoundingClientRect();
+        const originalTransition = element.style.transition;
         
-        // Lock the width of the entire button and center its contents
-        element.style.width = element.offsetWidth + 'px';
-        element.style.justifyContent = 'center';
+        // Lock both dimensions with sub-pixel precision
+        element.style.transition = 'none';
+        element.style.width = rect.width + 'px';
+        element.style.height = rect.height + 'px';
+        element.style.overflow = 'hidden';
 
         span.innerText = "Copied!";
         element.style.color = "#16a34a";
@@ -1144,7 +1221,9 @@ function copyEmail(email, element) {
             span.innerText = originalText;
             element.style.color = "";
             element.style.width = '';
-            element.style.justifyContent = '';
+            element.style.height = '';
+            element.style.overflow = '';
+            element.style.transition = originalTransition;
         }, 2000);
     });
 }
@@ -1545,8 +1624,34 @@ if (reminderForm) {
     });
 }
 
+// --- CHAT WIDGET INVERSION ---
+function initChatInversion() {
+    const chatWidget = document.getElementById('chat-widget');
+    const footer = document.querySelector('.footer');
+    
+    if (!chatWidget || !footer) return;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            // If footer enters the area where the chat widget is
+            if (entry.isIntersecting) {
+                chatWidget.classList.add('inverted');
+            } else {
+                chatWidget.classList.remove('inverted');
+            }
+        });
+    }, {
+        threshold: 0,
+        // Trigger when the footer is within 100px of the bottom (widget is at 2rem + 60px = ~92px)
+        rootMargin: '0px 0px -100px 0px'
+    });
+
+    observer.observe(footer);
+}
+
 // Initial Render
 renderAll();
+initChatInversion();
 
 // OFFICERS
 window.showAddOfficerForm = function () {

@@ -349,7 +349,7 @@
                     style="text-align: center; margin-bottom: 0.5rem; color: var(--text-heading); font-family: var(--font-heading);">
                     Officer Access</h2>
                 <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Please enter the
-                    designated password to access internal documents and edit the calendar.</p>
+                    designated password to access the officer dashboard.</p>
 
                 <div class="form-group" style="max-width: 300px; margin: 0 auto;">
                     <div class="password-toggle-wrapper">
@@ -426,6 +426,10 @@
                     <div class="section-manage-header"
                         style="justify-content: space-between; align-items: center; display: flex;">
                         <h3 style="margin: 0;">Text Subscriptions</h3>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-sm btn-outline-navy" style="display: inline-flex; align-items: center;" onclick="exportSubscribersCSV()"><i data-lucide="download" style="width: 16px; height: 16px; margin-right: 8px;"></i> Export CSV</button>
+                            <button class="btn btn-sm btn-navy" style="display: inline-flex; align-items: center;" onclick="copyAllSubscribers(this)"><i data-lucide="copy" style="width: 16px; height: 16px; margin-right: 8px;"></i> Copy All</button>
+                        </div>
                     </div>
                     <div id="admin-subscribers-list" class="manage-list">
                         <!-- Populated by JS -->
