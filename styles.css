@@ -244,6 +244,21 @@ body.modal-open {
     background: rgba(18, 40, 76, 0.05);
 }
 
+.btn-primary-glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary-glass:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
 /* Cards Base */
 .card {
     padding: 2.5rem;
@@ -557,7 +572,7 @@ body.modal-open {
 /* Sections Base */
 .section {
     padding: 5rem 0;
-    scroll-margin-top: 100px;
+    scroll-margin-top: 80px;
 }
 
 .bg-alt {
@@ -629,6 +644,102 @@ body.modal-open {
 .timeline-item {
     display: flex;
     flex-direction: column;
+}
+
+/* Timeline Controls */
+.timeline-controls {
+    max-width: 1000px;
+    margin: 0 auto 2rem;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.custom-dropdown {
+    position: relative;
+    width: 220px;
+    z-index: 100;
+}
+
+.dropdown-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-heading);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.dropdown-trigger:hover {
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 4px 12px rgba(18, 40, 76, 0.05);
+}
+
+.filter-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+    margin-right: 0.75rem;
+}
+
+.filter-arrow {
+    margin-left: auto;
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-dropdown.active .filter-arrow {
+    transform: rotate(180deg);
+    color: var(--primary);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    overflow: hidden;
+    padding: 0.5rem;
+}
+
+.custom-dropdown.active .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dropdown-item:hover {
+    background: #f1f5f9;
+    color: var(--primary);
 }
 
 .timeline-date {
@@ -1145,12 +1256,7 @@ body.modal-open {
     border-color: var(--primary);
 }
 
-/* Footer */
-.footer {
-    padding: 3rem 2rem;
-    background: #ffffff;
-    border-top: 1px solid var(--border-color);
-}
+
 
 /* Responsive Overrides */
 @media (max-width: 992px) {
@@ -1233,6 +1339,10 @@ body.modal-open {
         padding-bottom: 0;
         border-bottom-color: transparent;
         opacity: 0;
+    }
+
+    .section {
+        scroll-margin-top: 60px;
     }
 
     .hero {
@@ -1407,6 +1517,30 @@ body.modal-open {
     font-family: var(--font-heading);
     color: var(--text-heading);
     font-size: 1.3rem;
+    margin: 0;
+}
+
+.manage-header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+    .section-manage-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+    
+    .manage-header-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .manage-header-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 .manage-list {
@@ -1515,7 +1649,9 @@ body.modal-open {
 .item-info span {
     font-size: 0.85rem;
     color: var(--text-muted);
-    word-break: break-all;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    -webkit-hyphens: auto;
 }
 
 .item-meta {
@@ -2009,6 +2145,8 @@ hr {
     color: var(--secondary);
 }
 
+
+
 @media (max-width: 768px) {
     .footer-condensed {
         flex-direction: column;
@@ -2311,5 +2449,237 @@ textarea.form-control {
     .chat-toggle {
         width: 60px;
         height: 60px;
+    }
+}
+
+/* Memories & Moments Section - Refined Redesign */
+.memories-section {
+    background: var(--primary); /* Using the site's brand navy */
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 40%);
+    overflow: hidden;
+    padding: 3rem 0; /* Reduced padding as requested */
+    position: relative;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.memories-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 4rem;
+}
+
+.memories-content {
+    position: relative;
+    z-index: 10;
+}
+
+.memories-content .badge {
+    background: var(--secondary); /* Using the site's beige */
+    color: var(--primary);
+    border: none;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.memories-title {
+    font-family: var(--font-heading) !important;
+    font-size: 3rem !important; /* Slightly smaller to match site scale */
+    color: #ffffff !important;
+    margin-bottom: 1.25rem !important;
+    line-height: 1.2 !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
+}
+
+.memories-content .section-desc {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2rem;
+}
+
+.memories-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.polaroid-stack-wrapper {
+    position: relative;
+    height: 600px; /* Increased from 500px */
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 2000px;
+}
+
+.polaroid-stack {
+    position: relative;
+    width: 420px; /* Increased from 360px */
+    height: 520px; /* Increased from 440px */
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.polaroid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    padding: 1.25rem 1.25rem 5.5rem 1.25rem; /* Slightly more padding for label */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    backface-visibility: hidden;
+}
+
+.polaroid-inner {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #f1f5f9;
+    position: relative;
+}
+
+.polaroid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: contrast(1.05);
+    transition: transform 0.8s ease;
+}
+
+.polaroid-label {
+    position: absolute;
+    bottom: 1.25rem;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: 1.8rem; /* Slightly larger text */
+    color: var(--primary);
+    transform: rotate(-1.5deg);
+}
+
+/* Orientation variants */
+.polaroid.horizontal {
+    height: 400px; /* Increased from 340px */
+    top: 60px;
+}
+
+/* Active (top) card leaving animation */
+.polaroid.leaving {
+    transform: translateX(150%) rotate(30deg) scale(0.8) !important;
+    opacity: 0;
+    z-index: 100 !important;
+}
+
+/* Controls */
+.stack-controls {
+    position: absolute;
+    width: 100%;
+    height: 60px;
+    top: 50%;
+    left: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 150;
+    opacity: 0;
+    transition: all 0.4s ease;
+    transform: translateY(-50%);
+    padding: 0 1rem;
+}
+
+.polaroid-stack-wrapper:hover .stack-controls {
+    opacity: 1;
+}
+
+.stack-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.stack-btn:hover {
+    background: #ffffff;
+    transform: scale(1.1);
+}
+
+.stack-btn i {
+    width: 24px;
+    height: 24px;
+}
+
+@media (max-width: 968px) {
+    .memories-section {
+        padding: 2.5rem 0;
+    }
+    .memories-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 3rem;
+    }
+    .memories-content {
+        order: 1;
+    }
+    .memories-content .section-title,
+    .memories-content .section-desc {
+        text-align: center !important;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .memories-actions {
+        justify-content: center;
+    }
+    .polaroid-stack-wrapper {
+        order: 2;
+        height: 400px;
+    }
+    .polaroid-stack {
+        width: 300px;
+        height: 380px;
+    }
+    .stack-controls {
+        width: 100%;
+        left: 0;
+        padding: 0 1rem;
+    }
+    .polaroid.horizontal {
+        height: 250px;
+        top: 45px;
+    }
+}
+
+@media (max-width: 480px) {
+    .memories-title {
+        font-size: 2.25rem !important;
+    }
+    .polaroid-stack {
+        width: 260px;
+        height: 330px;
+    }
+    .stack-btn {
+        width: 44px;
+        height: 44px;
     }
 }

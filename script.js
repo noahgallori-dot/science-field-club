@@ -244,7 +244,7 @@ async function dbHeal(table, data, key) {
     for (let item of data) {
         const val = item[key] + (item.date || '');
         if (seen.has(val)) {
-            try { await supabaseClient.from(table).delete().eq('id', item.id); } catch(e) {}
+            try { await supabaseClient.from(table).delete().eq('id', item.id); } catch (e) { }
         } else {
             seen.add(val);
         }
@@ -291,12 +291,31 @@ window.addEventListener('load', checkPreviousSignup);
 // --- RENDERING ---
 
 function renderAll() {
-    renderTimeline();
-    renderStudentResources();
-    renderOfficers();
-    renderAdminLists();
-    updateTimelineHeader();
-    if (window.lucide) lucide.createIcons();
+    try {
+        renderTimeline();
+    } catch (e) { console.error("Error rendering timeline:", e); }
+    
+    try {
+        renderStudentResources();
+    } catch (e) { console.error("Error rendering resources:", e); }
+    
+    try {
+        renderOfficers();
+    } catch (e) { console.error("Error rendering officers:", e); }
+    
+    try {
+        renderAdminLists();
+    } catch (e) { console.error("Error rendering admin lists:", e); }
+    
+    try {
+        updateTimelineHeader();
+    } catch (e) { console.error("Error updating timeline header:", e); }
+
+    if (window.lucide) {
+        try {
+            lucide.createIcons();
+        } catch (e) { console.error("Error creating Lucide icons:", e); }
+    }
 }
 
 function renderOfficers() {
@@ -309,7 +328,7 @@ function renderOfficers() {
     } else {
         const regular = appData.officers.filter(o => !o.isAdvisor).slice(0, 6);
         const advisors = appData.officers.filter(o => o.isAdvisor).slice(0, 3);
-    
+
         function groupRegulars(officers) {
             const len = officers.length;
             let rows = [];
@@ -329,11 +348,11 @@ function renderOfficers() {
             }
             return rows.map(r => r.map(idx => officers[idx]));
         }
-    
+
         const regGroups = groupRegulars(regular);
-    
+
         let html = '';
-        
+
         for (const group of regGroups) {
             html += `<div class="officer-row">`;
             for (const officer of group) {
@@ -341,7 +360,7 @@ function renderOfficers() {
             }
             html += `</div>`;
         }
-    
+
         if (advisors.length > 0) {
             html += `<div style="margin-top: 3rem;">`;
             html += `<div class="officer-row">`;
@@ -350,9 +369,10 @@ function renderOfficers() {
             }
             html += `</div></div>`;
         }
-    
+
         container.innerHTML = html;
     }
+    if (window.lucide) lucide.createIcons();
 }
 
 function renderOfficerCardHTML(officer) {
@@ -360,10 +380,10 @@ function renderOfficerCardHTML(officer) {
     const fallbackBg = officer.fallbackColor || (officer.isAdvisor ? 'EADDca' : '12284C');
     const fallbackColor = officer.isAdvisor && !officer.fallbackColor ? '12284C' : 'fff';
     const fallbackUrl = `https://ui-avatars.com/api/?name=${fallbackInitials}&background=${fallbackBg}&color=${fallbackColor}&size=128`;
-    
+
     const advisorClass = officer.isAdvisor ? 'advisor-card' : '';
     const advisorStyle = officer.isAdvisor ? 'border: 2px solid var(--primary);' : '';
-    
+
     return `
         <div class="officer-card card-white shadow-hover ${advisorClass}" style="${advisorStyle}">
             <img src="${officer.image || fallbackUrl}" alt="${officer.name}" class="officer-img"
@@ -379,6 +399,34 @@ function renderOfficerCardHTML(officer) {
     `;
 }
 
+let timelineFilter = 'upcoming';
+
+function updateTimelineFilter(val) {
+    timelineFilter = val;
+    renderTimeline();
+}
+
+function toggleTimelineDropdown(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById('timeline-filter-dropdown');
+    dropdown.classList.toggle('active');
+}
+
+function selectTimelineFilter(value, text) {
+    const selectedText = document.getElementById('filter-selected-text');
+    if (selectedText) selectedText.textContent = text;
+    updateTimelineFilter(value);
+    document.getElementById('timeline-filter-dropdown').classList.remove('active');
+}
+
+// Global click to close dropdown
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('timeline-filter-dropdown');
+    if (dropdown && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('active');
+    }
+});
+
 function renderTimeline() {
     const container = document.getElementById('timeline-container');
     if (!container) return;
@@ -387,7 +435,8 @@ function renderTimeline() {
     today.setHours(0, 0, 0, 0);
 
     // Sort events by date before rendering
-    const sortedEvents = [...appData.calendar].sort((a, b) => {
+    const calendar = appData.calendar || [];
+    const sortedEvents = [...calendar].sort((a, b) => {
         const dateA = parseDate(a.date);
         const dateB = parseDate(b.date);
         dateA.setHours(0, 0, 0, 0);
@@ -395,7 +444,33 @@ function renderTimeline() {
         return dateA - dateB;
     });
 
-    container.innerHTML = sortedEvents.map(event => {
+    // Calculate counts for dropdown
+    const upcomingCount = sortedEvents.filter(e => {
+        const d = parseDate(e.date);
+        d.setHours(0,0,0,0);
+        return d >= today;
+    }).length;
+    const pastCount = sortedEvents.length - upcomingCount;
+
+    const upcomingEl = document.getElementById('filter-upcoming-item');
+    const pastEl = document.getElementById('filter-past-item');
+    const allEl = document.getElementById('filter-all-item');
+
+    if (upcomingEl) upcomingEl.textContent = `Upcoming Events (${upcomingCount})`;
+    if (pastEl) pastEl.textContent = `Past Events (${pastCount})`;
+    if (allEl) allEl.textContent = `All Events (${sortedEvents.length})`;
+
+    const filteredEvents = sortedEvents.filter(event => {
+        const eventDate = parseDate(event.date);
+        eventDate.setHours(0, 0, 0, 0);
+        const isPast = eventDate < today;
+
+        if (timelineFilter === 'upcoming') return !isPast;
+        if (timelineFilter === 'past') return isPast;
+        return true; // 'all'
+    });
+
+    function renderEvent(event) {
         const eventDate = parseDate(event.date);
         eventDate.setHours(0, 0, 0, 0);
         const isPast = eventDate < today;
@@ -416,12 +491,13 @@ function renderTimeline() {
             tagText = capitalize(event.type || 'Meeting');
         }
 
-        const linksHtml = (event.links || []).map(link =>
-            `<a href="${link.url}" target="_blank" class="read-more">${link.name.toUpperCase()} ▸</a>`
-        ).join('');
+        const linksHtml = (event.links || []).map(link => {
+            const name = (link.name || "LINK").toUpperCase();
+            return `<a href="${link.url}" target="_blank" class="read-more">${name} ▸</a>`;
+        }).join('');
 
         return `
-            <div class="timeline-item ${isPast ? 'past-event' : ''}">
+            <div class="timeline-item ${isPast ? 'past-event' : ''} animate-fade-in">
                 <div class="timeline-date">${formatDateForDisplay(event.date)}</div>
                 <div class="timeline-content card-beige ${!isPast && eventDate.getTime() === today.getTime() ? 'highlight-content' : ''}">
                     <div class="event-tag ${tagClass}">${tagText}</div>
@@ -431,7 +507,20 @@ function renderTimeline() {
                 </div>
             </div>
         `;
-    }).join('');
+    }
+
+    if (filteredEvents.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
+                <i data-lucide="calendar-x" style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <p style="font-size: 1.1rem;">No events found for this filter.</p>
+            </div>
+        `;
+    } else {
+        container.innerHTML = filteredEvents.map(renderEvent).join('');
+    }
+
+    if (window.lucide) lucide.createIcons();
 }
 
 function formatDateForDisplay(dateStr) {
@@ -477,6 +566,8 @@ function renderStudentResources() {
             </div>
         `;
     }).join('');
+
+    if (window.lucide) lucide.createIcons();
 }
 
 function renderAdminLists() {
@@ -554,7 +645,7 @@ function renderAdminLists() {
                         return;
                     }
 
-                    const scrollContainer = docsList; 
+                    const scrollContainer = docsList;
                     if (scrollContainer) {
                         const rect = scrollContainer.getBoundingClientRect();
                         const edgeZone = 80; // Increased zone
@@ -593,7 +684,7 @@ function renderAdminLists() {
                 forceFallback: true, // This makes the item follow the mouse more accurately
                 fallbackClass: "sortable-fallback",
                 fallbackOnBody: true,
-                fallbackTolerance: 3, 
+                fallbackTolerance: 3,
                 delay: 100, // Small delay for touch pickup
                 delayOnTouchOnly: true,
                 touchStartThreshold: 5, // Allow 5px of movement before canceling drag
@@ -653,8 +744,11 @@ function renderAdminLists() {
     const resourceList = document.getElementById('admin-resources-list');
     if (resourceList) {
         resourceList.innerHTML = appData.resources.map(res => `
-            <div class="manage-item card-item">
-                <div class="item-info">
+            <div class="manage-item card-item" data-id="${res.id}">
+                <div class="drag-handle" style="cursor: grab; margin-right: 0.5rem; color: var(--text-muted);">
+                    <i data-lucide="grip-vertical"></i>
+                </div>
+                <div class="item-info" style="flex: 1;">
                     <strong style="color: var(--primary);">${res.title}</strong>
                     <span style="font-size: 0.85rem; opacity: 0.8;">${res.description}</span>
                 </div>
@@ -663,6 +757,15 @@ function renderAdminLists() {
                 </div>
             </div>
         `).join('');
+
+        if (window.Sortable) {
+            if (resourceList._sortable) resourceList._sortable.destroy();
+            resourceList._sortable = Sortable.create(resourceList, {
+                handle: '.drag-handle',
+                animation: 300,
+                onEnd: function () { saveResourceOrder(); }
+            });
+        }
     }
 
     // Admin Calendar List
@@ -712,12 +815,43 @@ function renderAdminLists() {
     // Admin Officers List
     const officersList = document.getElementById('admin-officers-list');
     const advisorsList = document.getElementById('admin-advisors-list');
-    
+
     const allOfficers = appData.officers || [];
     const regular = allOfficers.filter(o => !o.isAdvisor);
     const advs = allOfficers.filter(o => o.isAdvisor);
 
-    function createOfficerManageItem(officer) {
+async function saveResourceOrder() {
+    const resourceList = document.getElementById('admin-resources-list');
+    const items = resourceList.querySelectorAll('.manage-item');
+    const newOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-id')));
+
+    // Update local state
+    appData.resources.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+
+    // Update Supabase
+    pendingCloudSaves++;
+    try {
+        const { error } = await supabaseClient
+            .from('resources')
+            .update({ order_indices: newOrder.join(',') })
+            .eq('id', 1); // Assuming a single row for global resource order or similar logic
+
+        // NOTE: The current schema seems to store resources as individual rows.
+        // If so, we need to update each row's 'order' field.
+        for (let i = 0; i < newOrder.length; i++) {
+            await supabaseClient.from('resources').update({ order: i }).eq('id', newOrder[i]);
+        }
+
+        renderStudentResources();
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error("Error saving resource order:", e);
+    } finally {
+        pendingCloudSaves--;
+    }
+}
+
+function createOfficerManageItem(officer) {
         const fallbackBg = officer.fallbackColor || (officer.isAdvisor ? 'EADDca' : '12284C');
         const fallbackColor = officer.isAdvisor && !officer.fallbackColor ? '12284C' : 'fff';
         const fallbackUrl = `https://ui-avatars.com/api/?name=${officer.name.replace(/\s+/g, '+')}&background=${fallbackBg}&color=${fallbackColor}`;
@@ -787,14 +921,14 @@ function renderAdminLists() {
     function saveOfficerOrder() {
         const oIds = Array.from(officersList?.querySelectorAll('.manage-item') || []).map(child => child.getAttribute('data-id'));
         const aIds = Array.from(advisorsList?.querySelectorAll('.manage-item') || []).map(child => child.getAttribute('data-id'));
-        
+
         const newOrderIds = [...oIds, ...aIds];
         const newOfficers = [];
         newOrderIds.forEach(id => {
             const off = appData.officers.find(o => String(o.id) === String(id));
             if (off) newOfficers.push(off);
         });
-        
+
         // Push any remaining officers that weren't in the lists
         appData.officers.forEach(o => {
             if (!newOrderIds.includes(String(o.id))) newOfficers.push(o);
@@ -802,12 +936,13 @@ function renderAdminLists() {
 
         appData.officers = newOfficers;
         appData.officersOrder = appData.officers.map(o => String(o.id));
-        
+
         localStorage.setItem('sf_club_data', JSON.stringify(appData));
         saveGlobalState();
         renderOfficers();
+        if (window.lucide) lucide.createIcons();
     }
-    
+
     if (window.lucide) lucide.createIcons();
 }
 
@@ -818,19 +953,19 @@ window.copyAllSubscribers = function (btn) {
         // Use getBoundingClientRect for sub-pixel precision to prevent 1-2px jumps
         const rect = btn.getBoundingClientRect();
         const originalTransition = btn.style.transition;
-        
+
         btn.style.transition = 'none';
         btn.style.width = rect.width + 'px';
         btn.style.height = rect.height + 'px';
         btn.style.overflow = 'hidden';
-        
+
         const originalHtml = btn.innerHTML;
         btn.innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px; margin-right: 8px;"></i>Copied!';
         if (window.lucide) window.lucide.createIcons();
         setTimeout(() => {
             btn.innerHTML = originalHtml;
             btn.style.width = '';
-            btn.style.height = ''; 
+            btn.style.height = '';
             btn.style.overflow = '';
             btn.style.transition = originalTransition;
             if (window.lucide) window.lucide.createIcons();
@@ -838,17 +973,17 @@ window.copyAllSubscribers = function (btn) {
     });
 }
 
-window.exportSubscribersCSV = function() {
+window.exportSubscribersCSV = function () {
     if (!appData.subscribers || appData.subscribers.length === 0) {
         alert("No subscribers to export.");
         return;
     }
-    
+
     // Create CSV content
     const header = "Name,Phone\n";
     const rows = appData.subscribers.map(s => `"${s.name}","${s.phone}"`).join("\n");
     const csvContent = header + rows;
-    
+
     // Create a Blob and trigger download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -861,12 +996,12 @@ window.exportSubscribersCSV = function() {
     document.body.removeChild(link);
 }
 
-window.copyText = function(text, element) {
+window.copyText = function (text, element) {
     navigator.clipboard.writeText(text).then(() => {
         const originalHtml = element.innerHTML;
         const rect = element.getBoundingClientRect();
         const originalTransition = element.style.transition;
-        
+
         // Lock both dimensions with sub-pixel precision and disable transitions
         element.style.transition = 'none';
         element.style.width = rect.width + 'px';
@@ -936,7 +1071,7 @@ function updateTimelineHeader() {
         const eventDate = parseDate(event.date);
         const dayOf = new Date(eventDate);
         dayOf.setHours(0, 0, 0, 0);
-        
+
         if (event.type === 'deadline') {
             const expiry = new Date(dayOf);
             expiry.setDate(expiry.getDate() + 1);
@@ -1101,7 +1236,7 @@ function checkAdminLogin() {
     const pwdInput = document.getElementById("admin-pwd").value;
     const errorMsg = document.getElementById("admin-error");
 
-    if (pwdInput === "SenorIsCool5") {
+    if (pwdInput === "Richeson456") {
         localStorage.setItem('is_logged_in', 'true');
         showDashboard();
     } else {
@@ -1208,7 +1343,7 @@ function copyEmail(email, element) {
         const originalText = span.innerText;
         const rect = element.getBoundingClientRect();
         const originalTransition = element.style.transition;
-        
+
         // Lock both dimensions with sub-pixel precision
         element.style.transition = 'none';
         element.style.width = rect.width + 'px';
@@ -1239,6 +1374,16 @@ function openFormModal(title, fields) {
     document.getElementById('form-modal').classList.add('show');
     document.body.classList.add('modal-open');
     if (window.lucide) lucide.createIcons();
+
+    // Initialize Sortable for links if container exists
+    const linksContainer = document.getElementById('dynamic-links-container');
+    if (linksContainer && window.Sortable) {
+        Sortable.create(linksContainer, {
+            handle: '.drag-handle',
+            animation: 200,
+            ghostClass: 'sortable-ghost'
+        });
+    }
 }
 
 function closeFormModal() {
@@ -1316,14 +1461,14 @@ window.handleFormSubmit = async function (e) {
                 isAdvisor: data.isAdvisor === 'on'
             };
             if (!appData.officers) appData.officers = [];
-            
+
             if (currentEditId) {
                 const idx = appData.officers.findIndex(o => String(o.id) === String(currentEditId));
                 if (idx !== -1) appData.officers[idx] = officer;
             } else {
                 appData.officers.push(officer);
             }
-            
+
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
             await saveGlobalState();
             closeFormModal();
@@ -1514,7 +1659,10 @@ function getResourceFields(data = {}) {
 
 function getLinkRowHtml(name = '', url = '') {
     return `
-        <div class="link-row" style="display: flex; gap: 0.5rem; align-items: center; animation: fadeIn 0.3s ease-out;">
+        <div class="link-row" style="display: flex; gap: 0.5rem; align-items: center; animation: fadeIn 0.3s ease-out; background: #f8fafc; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <div class="drag-handle" style="cursor: grab; color: var(--text-muted); padding: 0 0.25rem;">
+                <i data-lucide="grip-vertical" style="width: 16px; height: 16px;"></i>
+            </div>
             <input type="text" name="linkName[]" value="${name}" class="form-control" placeholder="Link Name" required style="flex: 1;">
             <input type="url" name="linkUrl[]" value="${url}" class="form-control" placeholder="URL" required style="flex: 2;">
             <button type="button" class="icon-btn danger" onclick="this.parentElement.remove()" style="width: 42px; height: 42px;"><i data-lucide="trash-2"></i></button>
@@ -1591,7 +1739,7 @@ if (reminderForm) {
             if (typeof emailjs !== 'undefined') {
                 emailjs.send('service_eosubks', 'template_pycgjtk', emailParams, 'W3ns6jMkHbfgnmWK9');
             }
-        } catch(err) {
+        } catch (err) {
             console.error("EmailJS error:", err);
         }
 
@@ -1628,7 +1776,7 @@ if (reminderForm) {
 function initChatInversion() {
     const chatWidget = document.getElementById('chat-widget');
     const footer = document.querySelector('.footer');
-    
+
     if (!chatWidget || !footer) return;
 
     const observer = new IntersectionObserver((entries) => {
@@ -1684,20 +1832,20 @@ window.deleteOfficer = async function (id) {
     }
 }
 
-window.removeOfficerPhoto = function() {
+window.removeOfficerPhoto = function () {
     document.getElementById('officer-image-b64').value = '';
     document.getElementById('photo-trash-btn').style.display = 'none';
     updateOfficerPreviewFallback();
 }
 
-window.updateOfficerPreviewFallback = function() {
+window.updateOfficerPreviewFallback = function () {
     const nameInput = document.querySelector('input[name="name"]');
     const b64 = document.getElementById('officer-image-b64')?.value;
     const previewCircle = document.getElementById('photo-preview-circle');
     const chooseBtnContainer = document.getElementById('choose-image-container');
-    
+
     if (!previewCircle) return;
-    
+
     if (b64 && b64.length > 0) {
         if (previewCircle.dataset.current !== 'b64') {
             previewCircle.innerHTML = `<img src="${b64}" class="animate-fade-in" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
@@ -1708,11 +1856,11 @@ window.updateOfficerPreviewFallback = function() {
         if (chooseBtnContainer) chooseBtnContainer.classList.remove('expanded');
         return;
     }
-    
+
     const trashBtn = document.getElementById('photo-trash-btn');
     if (trashBtn) trashBtn.style.display = 'none';
     if (chooseBtnContainer) chooseBtnContainer.classList.add('expanded');
-    
+
     if (nameInput && nameInput.value.trim().length > 0) {
         const currentName = nameInput.value.trim();
         const initialsUrl = `https://ui-avatars.com/api/?name=${currentName.replace(/\s+/g, '+')}&background=12284C&color=fff&size=128`;
@@ -1793,22 +1941,22 @@ function getOfficerFields(data = {}) {
 
 let currentCropper = null;
 
-window.handleOfficerPhoto = function(input) {
+window.handleOfficerPhoto = function (input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
-        
+
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             const cropContainer = document.getElementById('crop-container');
             const cropImage = document.getElementById('crop-image');
-            
+
             cropContainer.classList.add('expanded');
             cropImage.src = e.target.result;
-            
+
             if (currentCropper) {
                 currentCropper.destroy();
             }
-            
+
             currentCropper = new Cropper(cropImage, {
                 aspectRatio: 1,
                 viewMode: 1,
@@ -1817,12 +1965,12 @@ window.handleOfficerPhoto = function(input) {
             });
         }
         reader.readAsDataURL(file);
-        
+
         input.value = '';
     }
 }
 
-window.confirmCrop = function() {
+window.confirmCrop = function () {
     if (currentCropper) {
         const canvas = currentCropper.getCroppedCanvas({
             width: 400,
@@ -1830,11 +1978,11 @@ window.confirmCrop = function() {
         });
         const b64 = canvas.toDataURL('image/jpeg', 0.8);
         document.getElementById('officer-image-b64').value = b64;
-        
+
         document.getElementById('crop-container').classList.remove('expanded');
-        
+
         updateOfficerPreviewFallback();
-        
+
         currentCropper.destroy();
         currentCropper = null;
     }
@@ -1845,13 +1993,13 @@ let currentSlide = 0;
 const totalSlides = 5;
 let autoSlideInterval;
 
-window.moveCarousel = function(direction) {
+window.moveCarousel = function (direction) {
     currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
     updateCarousel();
     resetAutoSlide();
 }
 
-window.goToSlide = function(index) {
+window.goToSlide = function (index) {
     currentSlide = index;
     updateCarousel();
     resetAutoSlide();
@@ -1860,11 +2008,11 @@ window.goToSlide = function(index) {
 function updateCarousel() {
     const inner = document.getElementById('mission-carousel-inner');
     const indicators = document.querySelectorAll('.indicator');
-    
+
     if (inner) {
         inner.style.transform = `translateX(-${currentSlide * 100}%)`;
     }
-    
+
     indicators.forEach((ind, i) => {
         if (i === currentSlide) ind.classList.add('active');
         else ind.classList.remove('active');
@@ -1891,7 +2039,7 @@ function stopAutoSlide() {
 // Initialize carousel with Intersection Observer
 document.addEventListener('DOMContentLoaded', () => {
     updateCarousel();
-    
+
     const carouselSection = document.querySelector('.mission-carousel');
     if (carouselSection) {
         const observer = new IntersectionObserver((entries) => {
@@ -1903,7 +2051,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }, { threshold: 0.2 }); // Trigger when 20% of the carousel is visible
-        
+
         observer.observe(carouselSection);
     }
 });
@@ -1921,7 +2069,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const toggleChat = (forceClose = false) => {
         const isClosing = forceClose || chatWindow.style.display === 'flex';
-        
+
         if (!isClosing) {
             chatWindow.style.display = 'flex';
             chatWindow.classList.remove('closing');
@@ -1956,7 +2104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (chatForm) {
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const submitBtn = document.getElementById('chat-submit-btn');
             const submitSpan = submitBtn.querySelector('span');
             const originalText = submitSpan ? submitSpan.innerText : submitBtn.innerText;
@@ -1975,15 +2123,15 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // EmailJS Credentials provided by USER
                 await emailjs.send(
-                    'service_zjs4xto', 
-                    'template_cm9wv1k', 
+                    'service_zjs4xto',
+                    'template_cm9wv1k',
                     templateParams,
                     'qe_Z_EwImCbqDDLfJ'
                 );
-                
+
                 chatForm.style.display = 'none';
                 chatSuccess.style.display = 'block';
-                
+
                 chatForm.reset();
             } catch (error) {
                 console.error('EmailJS Error:', error);
@@ -1994,5 +2142,105 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.disabled = false;
             }
         });
+    }
+});
+// --- POLAROID STACK CAROUSEL ---
+let isRotating = false;
+let stackTimer = null;
+
+function rotateStack(dir) {
+    if (isRotating) return;
+    isRotating = true;
+
+    const stack = document.getElementById('polaroid-stack');
+    if (!stack) return;
+
+    const cards = Array.from(stack.children);
+    const topCard = cards[0];
+
+    if (dir === 'next') {
+        topCard.classList.add('leaving');
+        
+        setTimeout(() => {
+            topCard.classList.remove('leaving');
+            stack.appendChild(topCard);
+            updateStackStyles();
+            setTimeout(() => { isRotating = false; }, 100);
+        }, 500);
+    } else {
+        // Prev: Take the last card and bring it to front
+        const lastCard = cards[cards.length - 1];
+        lastCard.style.transition = 'none';
+        lastCard.classList.add('leaving');
+        stack.prepend(lastCard);
+        
+        // Force reflow
+        lastCard.offsetHeight;
+        
+        lastCard.style.transition = '';
+        lastCard.classList.remove('leaving');
+        updateStackStyles();
+        setTimeout(() => { isRotating = false; }, 500);
+    }
+}
+
+function updateStackStyles() {
+    const stack = document.getElementById('polaroid-stack');
+    if (!stack) return;
+    
+    const cards = Array.from(stack.children);
+    cards.forEach((card, i) => {
+        card.className = card.className.replace(/\bactive\b/g, '');
+        if (i === 0) card.classList.add('active');
+        
+        card.style.zIndex = cards.length - i;
+        
+        // Base rotations for organic feel
+        const baseRotation = (i % 2 === 0 ? -2 : 3) * (i + 1) * 0.5;
+        
+        if (i === 0) {
+            card.style.transform = `rotate(${baseRotation}deg) translateZ(0)`;
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+        } else if (i === 1) {
+            card.style.transform = `rotate(${baseRotation}deg) translateY(20px) translateX(20px) translateZ(-20px)`;
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+        } else if (i === 2) {
+            card.style.transform = `rotate(${baseRotation}deg) translateY(40px) translateX(-20px) translateZ(-40px)`;
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+        } else {
+            card.style.transform = `rotate(0deg) translateZ(-100px) translateY(45px)`;
+            card.style.opacity = '0';
+            card.style.visibility = 'hidden';
+        }
+    });
+}
+
+function startStackTimer() {
+    if (stackTimer) clearInterval(stackTimer);
+    stackTimer = setInterval(() => {
+        rotateStack('next');
+    }, 4000);
+}
+
+function stopStackTimer() {
+    if (stackTimer) {
+        clearInterval(stackTimer);
+        stackTimer = null;
+    }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+    updateStackStyles();
+    startStackTimer();
+    
+    const wrapper = document.querySelector('.polaroid-stack-wrapper');
+    
+    if (wrapper) {
+        wrapper.addEventListener('mouseenter', stopStackTimer);
+        wrapper.addEventListener('mouseleave', startStackTimer);
     }
 });

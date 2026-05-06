@@ -10,7 +10,7 @@
     <meta name="description" content="Sparking curiosity through hands-on field trips, teamwork, and exploration.">
     <link rel="stylesheet" href="styles.css">
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=Caveat:wght@700&display=swap"
         rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -51,14 +51,8 @@
                         <a href="#resources">Resources</a>
                         <a href="#trip-teams">Trip Teams</a>
                         <a href="#officers">Officers</a>
-                        <a href="#" onclick="openAdmin(); event.preventDefault();" class="mobile-login-link">Officer
-                            Login
-                            <i data-lucide="lock" style="width: 14px; height: 14px; margin-left: 4px;"></i></a>
                     </div>
                     <div class="nav-actions">
-                        <button class="btn btn-outline-navy" onclick="openAdmin()"
-                            style="font-family: var(--font-heading);"><i data-lucide="lock"
-                                style="width: 14px; height: 14px; margin-right: 4px;"></i> Officer Login</button>
                         <button class="mobile-menu-btn"><i data-lucide="menu"></i></button>
                     </div>
                 </div>
@@ -105,40 +99,98 @@
                 </div>
             </div>
 
-            <!-- Mission Carousel -->
-            <div class="mission-carousel">
-                <div class="carousel-inner" id="mission-carousel-inner">
-                    <div class="carousel-item">
-                        <img src="images/train.jpg" alt="Field Trip">
-                        <div class="caption"><h3>Real-World Exploration</h3><p>Taking science outside the classroom to explore industrial history and engineering.</p></div>
-                    </div>
-                    <div class="carousel-item">
-                        <img src="images/bird.jpg" alt="Wildlife">
-                        <div class="caption"><h3>Wildlife Observation</h3><p>Studying local biodiversity and animal behavior in their natural habitats.</p></div>
-                    </div>
-                    <div class="carousel-item">
-                        <img src="images/fish.jpg" alt="Ecosystems">
-                        <div class="caption"><h3>Marine Biology</h3><p>Investigating aquatic life and the importance of healthy water ecosystems.</p></div>
-                    </div>
-                    <div class="carousel-item">
-                        <img src="images/boys.jpg" alt="Teamwork">
-                        <div class="caption"><h3>Hands-On Learning</h3><p>Collaborating on field research and data collection during club outings.</p></div>
-                    </div>
-                    <div class="carousel-item">
-                        <img src="images/girls.jpg" alt="Science">
-                        <div class="caption"><h3>Empowering Discovery</h3><p>Providing access to STEM experiences and building confidence in scientific inquiry.</p></div>
-                    </div>
-                </div>
-                <button class="carousel-control prev" onclick="moveCarousel(-1)"><i data-lucide="chevron-left"></i></button>
-                <button class="carousel-control next" onclick="moveCarousel(1)"><i data-lucide="chevron-right"></i></button>
-                <div class="carousel-indicators" id="carousel-indicators">
-                    <div class="indicator active" onclick="goToSlide(0)"></div>
-                    <div class="indicator" onclick="goToSlide(1)"></div>
-                    <div class="indicator" onclick="goToSlide(2)"></div>
-                    <div class="indicator" onclick="goToSlide(3)"></div>
-                    <div class="indicator" onclick="goToSlide(4)"></div>
+            <!-- Mission Carousel replaced by Memories section below -->
+        </div>
+    </section>
+
+    <!-- Memories & Moments Section -->
+    <section id="memories" class="section memories-section">
+        <div class="container memories-grid">
+            <div class="memories-content animate-on-scroll">
+                <div class="badge">Moments & Memories</div>
+                <h2 class="section-title memories-title">Science in Action</h2>
+                <p class="section-desc">
+                    From high-tech research labs to the rugged Oregon wilderness, our club captures every moment of discovery. Check out our snapshots from recent field trips and get a glimpse into the life of a Science Field Club member.
+                </p>
+                <div class="memories-actions">
+                    <a href="https://drive.google.com/drive/folders/1r8F1S_kSP0OAeFQEv73BoU8LMIqvhUAe?usp=sharing" 
+                       target="_blank" class="btn btn-primary-glass">
+                        <i data-lucide="external-link" style="width: 18px; height: 18px;"></i> View Full Gallery
+                    </a>
                 </div>
             </div>
+            
+            <div class="polaroid-stack-wrapper">
+                <div class="polaroid-stack" id="polaroid-stack">
+                    <div class="polaroid vertical active">
+                        <div class="polaroid-inner">
+                            <img src="images/1.jpg" alt="Club Photo 1">
+                            <div class="polaroid-label"></div>
+                        </div>
+                    </div>
+                    <div class="polaroid horizontal">
+                        <div class="polaroid-inner">
+                            <img src="images/2.jpg" alt="Club Photo 2">
+                            <div class="polaroid-label"></div>
+                        </div>
+                    </div>
+                    <div class="polaroid vertical">
+                        <div class="polaroid-inner">
+                            <img src="images/3.jpg" alt="Club Photo 3">
+                            <div class="polaroid-label"></div>
+                        </div>
+                    </div>
+                    <div class="polaroid horizontal">
+                        <div class="polaroid-inner">
+                            <img src="images/4.jpg" alt="Club Photo 4">
+                            <div class="polaroid-label"></div>
+                        </div>
+                    </div>
+                    <div class="polaroid horizontal">
+                        <div class="polaroid-inner">
+                            <img src="images/5.jpg" alt="Club Photo 5">
+                            <div class="polaroid-label"></div>
+                        </div>
+                    </div>
+                    <div class="polaroid horizontal">
+                        <div class="polaroid-inner">
+                            <img src="images/6.jpg" alt="Club Photo 6">
+                            <div class="polaroid-label"></div>
+                        </div>
+                    </div>
+                    <div class="polaroid vertical">
+                        <div class="polaroid-inner">
+                            <img src="images/7.jpg" alt="Club Photo 7">
+                            <div class="polaroid-label"></div>
+                        </div>
+                    </div>
+                    <div class="polaroid horizontal">
+                        <div class="polaroid-inner">
+                            <img src="images/8.jpg" alt="Club Photo 8">
+                            <div class="polaroid-label"></div>
+                        </div>
+                    </div>
+                    <div class="polaroid horizontal">
+                        <div class="polaroid-inner">
+                            <img src="images/9.jpg" alt="Club Photo 9">
+                            <div class="polaroid-label"></div>
+                        </div>
+                    </div>
+                    <div class="polaroid vertical">
+                        <div class="polaroid-inner">
+                            <img src="images/10.jpg" alt="Club Photo 10">
+                            <div class="polaroid-label"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stack-controls">
+                    <button class="stack-btn prev" onclick="rotateStack('prev')"><i data-lucide="chevron-left"></i></button>
+                    <button class="stack-btn next" onclick="rotateStack('next')"><i data-lucide="chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </section>
         </div>
     </section>
 
@@ -156,10 +208,26 @@
             <div class="alert-box">
                 <i data-lucide="alert-circle" class="alert-icon"></i>
                 <div class="alert-content">
-                    <strong>Important Note on Fees:</strong> All permission slips should be placed in a <strong>sealed envelope</strong>
+                    <strong>Important Note on Fees:</strong> All permission slips should be placed in a <strong>sealed
+                        envelope</strong>
                     and turned in to Mr. Richeson. If paying with cash, include the payment inside and write your
                     full name along with “Cash” on the front. If paying through Venmo (@krissy-allori), write
                     your full name and “Venmo” on the front instead.
+                </div>
+            </div>
+
+            <div class="timeline-controls">
+                <div class="custom-dropdown" id="timeline-filter-dropdown">
+                    <button class="dropdown-trigger" onclick="toggleTimelineDropdown(event)">
+                        <i data-lucide="filter" class="filter-icon"></i>
+                        <span id="filter-selected-text">Upcoming Events</span>
+                        <i data-lucide="chevron-down" class="filter-arrow"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <div id="filter-upcoming-item" class="dropdown-item" onclick="selectTimelineFilter('upcoming', 'Upcoming Events')">Upcoming Events</div>
+                        <div id="filter-past-item" class="dropdown-item" onclick="selectTimelineFilter('past', 'Past Events')">Past Events</div>
+                        <div id="filter-all-item" class="dropdown-item" onclick="selectTimelineFilter('all', 'All Events')">All Events</div>
+                    </div>
                 </div>
             </div>
 
@@ -187,7 +255,8 @@
                         </div>
                         <div class="form-group" style="flex: 1.5; min-width: 160px;">
                             <input type="tel" id="reminder-phone" class="form-control" required
-                                placeholder="(XXX) XXX-XXXX" maxlength="14" pattern="\(\d{3}\) \d{3}-\d{4}" autocomplete="off">
+                                placeholder="(XXX) XXX-XXXX" maxlength="14" pattern="\(\d{3}\) \d{3}-\d{4}"
+                                autocomplete="off">
                         </div>
                         <button type="submit" class="btn btn-navy"
                             style="font-family: var(--font-heading); flex: 0 0 auto; padding-left: 1.25rem; padding-right: 1.25rem;">Sign
@@ -231,7 +300,8 @@
         <div class="container">
             <div class="section-header">
                 <h2>Trip Teams</h2>
-                <p class="section-desc">We use Trip Teams to keep everyone engaged and learning. Access the shared slide set in <strong>Student Resources</strong>—please do not create separate files!</p>
+                <p class="section-desc">We use Trip Teams to keep everyone engaged and learning. Roles refresh for each
+                    trip to keep things fresh.</p>
             </div>
 
             <div class="grid-3 mb-4">
@@ -260,19 +330,24 @@
                 <div class="steps-list">
                     <div class="step">
                         <div class="step-num">1</div>
-                        <div class="step-text">Click on one of the template images.</div>
+                        <div class="step-text">Go to the <strong>Student Resources</strong> section and click a
+                            slide set under <strong>Trip Team Slides</strong>.</div>
                     </div>
                     <div class="step">
                         <div class="step-num">2</div>
+                        <div class="step-text">Once in the slides, click on one of the template images.</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">3</div>
                         <div class="step-text">Click <strong>Replace Image</strong> and upload your team's amazing
                             photos.</div>
                     </div>
                     <div class="step">
-                        <div class="step-num">3</div>
+                        <div class="step-num">4</div>
                         <div class="step-text">Add your group members' names at the top of the slide.</div>
                     </div>
                     <div class="step">
-                        <div class="step-num">4</div>
+                        <div class="step-num">5</div>
                         <div class="step-text">Where the template text is, put in the exciting details & facts about
                             your trip!</div>
                     </div>
@@ -324,10 +399,9 @@
 
             <div class="footer-bottom-condensed">
                 <div class="footer-links-condensed">
-                    <a href="#about">About</a>
-                    <a href="#events">Schedule</a>
                     <a href="#resources">Resources</a>
-                    <a href="#trip-teams">Trip Teams</a>
+                    <a href="#events">Schedule</a>
+                    <a href="#" onclick="openAdmin(); event.preventDefault();">Officer Login</a>
                 </div>
                 <div class="footer-copyright">
                     © 2026 BHS Science Field Club. All rights reserved.
@@ -377,88 +451,106 @@
                 <div class="dashboard-main-layout">
                     <!-- Dashboard Tabs -->
                     <div class="dashboard-tabs">
-                        <button class="tab-btn active" onclick="switchTab('tab-docs')" title="Internal Docs"><i data-lucide="file-text"></i>
+                        <button class="tab-btn active" onclick="switchTab('tab-docs')" title="Internal Docs"><i
+                                data-lucide="file-text"></i>
                             <span class="tab-text">Internal Docs</span></button>
-                        <button class="tab-btn" onclick="switchTab('tab-resources')" title="Student Resources"><i data-lucide="link"></i>
+                        <button class="tab-btn" onclick="switchTab('tab-resources')" title="Student Resources"><i
+                                data-lucide="link"></i>
                             <span class="tab-text">Resources</span></button>
-                        <button class="tab-btn" onclick="switchTab('tab-calendar')" title="Calendar"><i data-lucide="calendar"></i>
+                        <button class="tab-btn" onclick="switchTab('tab-calendar')" title="Calendar"><i
+                                data-lucide="calendar"></i>
                             <span class="tab-text">Calendar</span></button>
-                        <button class="tab-btn" onclick="switchTab('tab-subscribers')" title="Subscribers"><i data-lucide="users"></i>
+                        <button class="tab-btn" onclick="switchTab('tab-subscribers')" title="Subscribers"><i
+                                data-lucide="users"></i>
                             <span class="tab-text">Subscribers</span></button>
-                        <button class="tab-btn" onclick="switchTab('tab-officers')" title="Officers"><i data-lucide="user-cog"></i>
+                        <button class="tab-btn" onclick="switchTab('tab-officers')" title="Officers"><i
+                                data-lucide="user-cog"></i>
                             <span class="tab-text">Officers</span></button>
                     </div>
 
                     <div class="dashboard-content-area">
 
-                <div class="tab-content show" id="tab-docs">
-                    <div class="section-manage-header">
-                        <h3>Internal Documents</h3>
-                        <button class="btn btn-sm btn-navy" onclick="showAddDocForm()"><i data-lucide="plus"></i> Add
-                            Link</button>
-                    </div>
-                    <div id="admin-docs-list" class="manage-list">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
+                        <div class="tab-content show" id="tab-docs">
+                            <div class="section-manage-header">
+                                <h3>Internal Documents</h3>
+                                <button class="btn btn-sm btn-navy" onclick="showAddDocForm()"><i
+                                        data-lucide="plus"></i> Add
+                                    Link</button>
+                            </div>
+                            <div id="admin-docs-list" class="manage-list">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
 
-                <div class="tab-content" id="tab-resources">
-                    <div class="section-manage-header">
-                        <h3>Student Resource Cards</h3>
-                    </div>
-                    <div id="admin-resources-list" class="manage-list">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
+                        <div class="tab-content" id="tab-resources">
+                            <div class="section-manage-header">
+                                <h3>Student Resource Cards</h3>
+                            </div>
+                            <div id="admin-resources-list" class="manage-list">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
 
-                <div class="tab-content" id="tab-calendar">
-                    <div class="section-manage-header">
-                        <h3>Event Calendar</h3>
-                        <button class="btn btn-sm btn-navy" onclick="showAddEventForm()"><i data-lucide="plus"></i> Add
-                            Event</button>
-                    </div>
-                    <div id="admin-calendar-list" class="manage-list">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
+                        <div class="tab-content" id="tab-calendar">
+                            <div class="section-manage-header">
+                                <h3>Event Calendar</h3>
+                                <div class="manage-header-actions">
+                                    <button class="btn btn-sm btn-navy" onclick="showAddEventForm()"><i
+                                            data-lucide="plus"></i> Add Event</button>
+                                </div>
+                            </div>
+                            <div id="admin-calendar-list" class="manage-list">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
 
-                <div class="tab-content" id="tab-subscribers">
-                    <div class="section-manage-header"
-                        style="justify-content: space-between; align-items: center; display: flex;">
-                        <h3 style="margin: 0;">Text Subscriptions</h3>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button class="btn btn-sm btn-outline-navy" style="display: inline-flex; align-items: center;" onclick="exportSubscribersCSV()"><i data-lucide="download" style="width: 16px; height: 16px; margin-right: 8px;"></i> Export CSV</button>
-                            <button class="btn btn-sm btn-navy" style="display: inline-flex; align-items: center;" onclick="copyAllSubscribers(this)"><i data-lucide="copy" style="width: 16px; height: 16px; margin-right: 8px;"></i> Copy All</button>
+                        <div class="tab-content" id="tab-subscribers">
+                            <div class="section-manage-header">
+                                <h3>Text Subscriptions</h3>
+                                <div class="manage-header-actions">
+                                    <button class="btn btn-sm btn-outline-navy"
+                                        onclick="exportSubscribersCSV()"><i data-lucide="download"
+                                            style="width: 16px; height: 16px; margin-right: 8px;"></i> Export
+                                        CSV</button>
+                                    <button class="btn btn-sm btn-navy"
+                                        onclick="copyAllSubscribers(this)"><i data-lucide="copy"
+                                            style="width: 16px; height: 16px; margin-right: 8px;"></i> Copy All</button>
+                                </div>
+                            </div>
+                            <div id="admin-subscribers-list" class="manage-list">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tab-officers">
+                            <div class="section-manage-header">
+                                <h3>Leadership & Officers</h3>
+                                <div class="manage-header-actions">
+                                    <button class="btn btn-sm btn-navy" onclick="showAddOfficerForm()"><i
+                                            data-lucide="plus"></i> Add Officer</button>
+                                </div>
+                            </div>
+                            <div class="manage-list" style="padding-right: 0.5rem; overflow-x: hidden;">
+                                <h4 style="color: var(--primary); margin-bottom: 0.75rem; font-size: 1.1rem;">Student
+                                    Officers</h4>
+                                <div id="admin-officers-list"
+                                    style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem;">
+                                    <!-- Populated by JS -->
+                                </div>
+
+                                <h4 style="color: var(--primary); margin-bottom: 0.75rem; font-size: 1.1rem;">Faculty
+                                    Advisors</h4>
+                                <div id="admin-advisors-list"
+                                    style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div id="admin-subscribers-list" class="manage-list">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-                
-                <div class="tab-content" id="tab-officers">
-                    <div class="section-manage-header">
-                        <h3>Leadership & Officers</h3>
-                        <button class="btn btn-sm btn-navy" onclick="showAddOfficerForm()"><i data-lucide="plus"></i> Add
-                            Officer</button>
-                    </div>
-                    <div class="manage-list" style="padding-right: 0.5rem; overflow-x: hidden;">
-                        <h4 style="color: var(--primary); margin-bottom: 0.75rem; font-size: 1.1rem;">Student Officers</h4>
-                        <div id="admin-officers-list" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem;">
-                            <!-- Populated by JS -->
-                        </div>
-                        
-                        <h4 style="color: var(--primary); margin-bottom: 0.75rem; font-size: 1.1rem;">Faculty Advisors</h4>
-                        <div id="admin-advisors-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                            <!-- Populated by JS -->
-                        </div>
-                    </div>
-                </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
     <!-- Generic Admin Form Modal -->
     <div id="form-modal" class="modal">
@@ -514,7 +606,8 @@
                         <input type="email" id="chat-email" class="form-control" placeholder="Email Address" required>
                     </div>
                     <div class="chat-input-group">
-                        <textarea id="chat-message" class="form-control" placeholder="Your Question or Comment..." required rows="3"></textarea>
+                        <textarea id="chat-message" class="form-control" placeholder="Your Question or Comment..."
+                            required rows="3"></textarea>
                     </div>
                     <button type="submit" id="chat-submit-btn" class="btn btn-navy modern-chat-btn">
                         <span>Send Message</span>
