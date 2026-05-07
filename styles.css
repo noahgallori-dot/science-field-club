@@ -2515,6 +2515,13 @@ textarea.form-control {
     justify-content: center;
     align-items: center;
     perspective: 2000px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.polaroid-stack-wrapper:active {
+    cursor: grabbing;
 }
 
 .polaroid-stack {
@@ -2584,25 +2591,10 @@ textarea.form-control {
 
 /* Controls */
 .stack-controls {
-    position: absolute;
-    width: 100%;
-    height: 60px;
-    top: 50%;
-    left: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    pointer-events: none;
-    z-index: 150;
-    opacity: 0;
-    transition: all 0.4s ease;
-    transform: translateY(-50%);
-    padding: 0 1rem;
+    display: none !important;
 }
 
-.polaroid-stack-wrapper:hover .stack-controls {
-    opacity: 1;
-}
+/* .stack-controls hover removed */
 
 .stack-btn {
     width: 50px;
@@ -2659,11 +2651,7 @@ textarea.form-control {
         width: 300px;
         height: 380px;
     }
-    .stack-controls {
-        width: 100%;
-        left: 0;
-        padding: 0 1rem;
-    }
+    /* .stack-controls hidden globally */
     .polaroid.horizontal {
         height: 250px;
         top: 45px;

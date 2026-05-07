@@ -2150,37 +2150,46 @@ let stackTimer = null;
 
 function rotateStack(dir) {
     if (isRotating) return;
-    isRotating = true;
 
     const stack = document.getElementById('polaroid-stack');
-    if (!stack) return;
+    if (!stack || !stack.children.length) return;
 
+    isRotating = true;
     const cards = Array.from(stack.children);
     const topCard = cards[0];
 
     if (dir === 'next') {
-        topCard.classList.add('leaving');
-        
+        topCard.style.transition = 'all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
+        topCard.offsetHeight;
+        topCard.style.transform = 'translateX(150%) rotate(30deg) scale(0.8)';
+        topCard.style.opacity = '0';
+
         setTimeout(() => {
-            topCard.classList.remove('leaving');
-            stack.appendChild(topCard);
-            updateStackStyles();
-            setTimeout(() => { isRotating = false; }, 100);
-        }, 500);
+            if (topCard.parentNode === stack) {
+                topCard.style.transition = '';
+                topCard.style.opacity = '';
+                stack.appendChild(topCard);
+                updateStackStyles();
+            }
+            isRotating = false;
+        }, 600);
     } else {
-        // Prev: Take the last card and bring it to front
         const lastCard = cards[cards.length - 1];
         lastCard.style.transition = 'none';
-        lastCard.classList.add('leaving');
+        lastCard.style.transform = 'translateX(-150%) rotate(-30deg) scale(0.8)';
+        lastCard.style.opacity = '0';
         stack.prepend(lastCard);
-        
+
         // Force reflow
         lastCard.offsetHeight;
-        
-        lastCard.style.transition = '';
-        lastCard.classList.remove('leaving');
+
+        lastCard.style.transition = 'all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
+        lastCard.style.opacity = '1';
         updateStackStyles();
-        setTimeout(() => { isRotating = false; }, 500);
+
+        setTimeout(() => {
+            isRotating = false;
+        }, 600);
     }
 }
 
@@ -2190,12 +2199,11 @@ function updateStackStyles() {
     
     const cards = Array.from(stack.children);
     cards.forEach((card, i) => {
-        card.className = card.className.replace(/\bactive\b/g, '');
+        card.classList.remove('active');
         if (i === 0) card.classList.add('active');
         
         card.style.zIndex = cards.length - i;
         
-        // Base rotations for organic feel
         const baseRotation = (i % 2 === 0 ? -2 : 3) * (i + 1) * 0.5;
         
         if (i === 0) {
@@ -2219,10 +2227,13 @@ function updateStackStyles() {
 }
 
 function startStackTimer() {
-    if (stackTimer) clearInterval(stackTimer);
+    stopStackTimer();
     stackTimer = setInterval(() => {
-        rotateStack('next');
-    }, 4000);
+        // Only trigger if the document is visible to avoid throttled "buildup"
+        if (document.visibilityState === 'visible') {
+            rotateStack('next');
+        }
+    }, 4500);
 }
 
 function stopStackTimer() {
@@ -2242,5 +2253,138 @@ document.addEventListener('DOMContentLoaded', () => {
     if (wrapper) {
         wrapper.addEventListener('mouseenter', stopStackTimer);
         wrapper.addEventListener('mouseleave', startStackTimer);
+
+        // Drag/Swipe support with real-time speed control
+        let startX = 0;
+        let isDragging = false;
+        let topCard = null;
+        let baseRotation = -1;
+
+        const handleStart = (x, e) => {
+            if (isRotating) return;
+            const stack = document.getElementById('polaroid-stack');
+            if (!stack) return;
+            topCard = stack.children[0];
+            if (!topCard) return;
+
+            startX = x;
+            isDragging = true;
+            stopStackTimer();
+
+            topCard.style.transition = 'none';
+            
+            // Get the current rotation
+            try {
+                const style = window.getComputedStyle(topCard);
+                const matrix = new WebKitCSSMatrix(style.transform);
+                baseRotation = Math.round(Math.atan2(matrix.b, matrix.a) * (180/Math.PI));
+            } catch (err) {
+                baseRotation = -1;
+            }
+            
+            if (e && e.cancelable) e.preventDefault();
+        };
+
+        const handleMove = (x) => {
+            if (!isDragging || !topCard) return;
+            const deltaX = x - startX;
+            
+            const rotation = baseRotation + (deltaX * 0.05);
+            topCard.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg) translateZ(0)`;
+            
+            const opacity = Math.max(0.7, 1 - Math.abs(deltaX) / 1000);
+            topCard.style.opacity = opacity;
+        };
+
+        const handleEnd = (x) => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            if (!topCard) {
+                startStackTimer();
+                return;
+            }
+
+            const deltaX = x - startX;
+            const threshold = 120;
+
+            if (Math.abs(deltaX) > threshold) {
+                // Thrown! Lock interaction
+                isRotating = true;
+                const direction = deltaX > 0 ? 1 : -1;
+                
+                // Force a reflow and then apply transition + transform
+                topCard.style.transition = 'all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                topCard.offsetHeight; // Trigger reflow
+                
+                topCard.style.transform = `translateX(${direction * 150}%) rotate(${direction * 30}deg) scale(0.8)`;
+                topCard.style.opacity = '0';
+
+                const cardToRecycle = topCard;
+                topCard = null;
+
+                setTimeout(() => {
+                    const stack = document.getElementById('polaroid-stack');
+                    if (stack && cardToRecycle) {
+                        cardToRecycle.style.transition = '';
+                        cardToRecycle.style.opacity = '';
+                        stack.appendChild(cardToRecycle);
+                        updateStackStyles();
+                    }
+                    isRotating = false; // Unlock
+                    startStackTimer();
+                }, 500);
+            } else {
+                // Snap back
+                topCard.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                topCard.offsetHeight;
+                topCard.style.opacity = '1';
+                updateStackStyles();
+                
+                const cardToReset = topCard;
+                topCard = null;
+                setTimeout(() => {
+                    if (cardToReset) cardToReset.style.transition = '';
+                    startStackTimer();
+                }, 400);
+            }
+        };
+
+        // Reset drag on blur to prevent sticking
+        window.addEventListener('blur', () => {
+            if (isDragging) handleEnd(startX);
+        });
+
+        // Touch events
+        wrapper.addEventListener('touchstart', (e) => {
+            handleStart(e.changedTouches[0].clientX, e);
+        }, { passive: false });
+
+        wrapper.addEventListener('touchmove', (e) => {
+            handleMove(e.changedTouches[0].clientX);
+        }, { passive: true });
+
+        wrapper.addEventListener('touchend', (e) => {
+            handleEnd(e.changedTouches[0].clientX);
+        }, { passive: true });
+
+        // Mouse events
+        wrapper.addEventListener('mousedown', (e) => {
+            handleStart(e.clientX, e);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            handleMove(e.clientX);
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            handleEnd(e.clientX);
+        });
+
+        // Prevent browser's native drag-and-drop
+        wrapper.addEventListener('dragstart', (e) => e.preventDefault());
+        wrapper.querySelectorAll('img').forEach(img => {
+            img.addEventListener('dragstart', (e) => e.preventDefault());
+        });
     }
 });
