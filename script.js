@@ -2388,3 +2388,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// --- SCROLL REVEAL ANIMATIONS ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Add reveal class to key elements
+    document.querySelectorAll('.section-header, .card, .timeline-item, .role-card, .officer-card, .alert-box, .instruction-box, .resource-card').forEach((el, i) => {
+        el.classList.add('reveal');
+        // Stagger cards within same parent
+        const siblings = el.parentElement ? Array.from(el.parentElement.children).filter(c => c.classList.contains('reveal')) : [];
+        const sibIdx = siblings.indexOf(el);
+        if (sibIdx > 0 && sibIdx <= 3) {
+            el.classList.add(`reveal-delay-${sibIdx}`);
+        }
+    });
+
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+});
