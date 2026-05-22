@@ -86,7 +86,16 @@ const DEFAULT_DATA = {
         { id: 5, name: "Dylan McDonald", role: "Treasurer", email: "dylanm2027@banks.k12.or.us", image: "images/dylan.jpg", fallbackColor: "12284C", isAdvisor: false },
         { id: 6, name: "Mark Anunsen", role: "Media Coordinator", email: "marka2027@banks.k12.or.us", image: "images/mark.jpg", fallbackColor: "12284C", isAdvisor: false },
         { id: 7, name: "Mr. Richeson", role: "Faculty Advisor", email: "tonyr@banks.k12.or.us", image: "images/richeson.webp", fallbackColor: "EADDca", isAdvisor: true }
-    ]
+    ],
+    galleryPhotos: [
+        { id: 'default-fish', image: 'images/fish.jpg', ratio: 1.498 },
+        { id: 'default-boys', image: 'images/boys.jpg', ratio: 1.498 },
+        { id: 'default-girls', image: 'images/girls.jpg', ratio: 1.498 },
+        { id: 'default-train', image: 'images/train.jpg', ratio: 1.498 },
+        { id: 'default-omsi', image: 'images/omsi.jpg', ratio: 1.333 },
+        { id: 'default-bird', image: 'images/bird.jpg', ratio: 1.498 }
+    ],
+    galleryLink: "https://drive.google.com/drive/folders/1r8F1S_kSP0OAeFQEv73BoU8LMIqvhUAe?usp=sharing"
 };
 
 // INITIALIZE WITH LOCAL DATA IMMEDIATELY
@@ -181,6 +190,38 @@ async function loadDataAndSync() {
                 appData.officersOrder = savedOfficersOrder;
             }
 
+            // 7. PROCESS GALLERY
+            if (cloudState.galleryPhotos) {
+                appData.galleryPhotos = cloudState.galleryPhotos;
+            } else {
+                const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
+                if (savedData?.galleryPhotos) appData.galleryPhotos = savedData.galleryPhotos;
+            }
+
+            // Clean up legacy placeholders and replace with real field trip photos
+            if (!appData.galleryPhotos || appData.galleryPhotos.length === 0 || appData.galleryPhotos.some(p => String(p.image).includes('1.jpg') || String(p.id).includes('default-1') || String(p.id).includes('default-2'))) {
+                appData.galleryPhotos = JSON.parse(JSON.stringify(DEFAULT_DATA.galleryPhotos));
+                saveGlobalState();
+            } else {
+                // Migrate any legacy gallery photos with aspect property to have ratio
+                let migrated = false;
+                appData.galleryPhotos.forEach(p => {
+                    if (p.ratio === undefined && p.aspect) {
+                        p.ratio = p.aspect === 'vertical' ? 0.75 : 1.5;
+                        migrated = true;
+                    }
+                });
+                if (migrated) {
+                    saveGlobalState();
+                }
+            }
+            if (cloudState.galleryLink) {
+                appData.galleryLink = cloudState.galleryLink;
+            } else {
+                const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
+                if (savedData?.galleryLink) appData.galleryLink = savedData.galleryLink;
+            }
+
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
         } else {
             console.log("Cloud is empty. Migrating your local data...");
@@ -210,7 +251,9 @@ async function saveGlobalState() {
         subscribers: appData.subscribers || [],
         adminDocsOrder: appData.adminDocsOrder || [],
         officers: appData.officers || [],
-        officersOrder: appData.officersOrder || []
+        officersOrder: appData.officersOrder || [],
+        galleryPhotos: appData.galleryPhotos || [],
+        galleryLink: appData.galleryLink || ""
     };
 
     pendingCloudSaves++;
@@ -310,6 +353,10 @@ function renderAll() {
     try {
         updateTimelineHeader();
     } catch (e) { console.error("Error updating timeline header:", e); }
+
+    try {
+        renderGallery();
+    } catch (e) { console.error("Error rendering gallery:", e); }
 
     if (window.lucide) {
         try {
@@ -943,6 +990,10 @@ function createOfficerManageItem(officer) {
         if (window.lucide) lucide.createIcons();
     }
 
+    try {
+        renderAdminGalleryList();
+    } catch (e) { console.error("Error rendering admin gallery list:", e); }
+
     if (window.lucide) lucide.createIcons();
 }
 
@@ -1328,13 +1379,38 @@ window.switchTab = function (tabId) {
     });
 }
 
-// Close modal if clicked outside of content
-window.onclick = function (event) {
-    const modal = document.getElementById('admin-modal');
-    const fModal = document.getElementById('form-modal');
-    if (event.target == modal) closeAdmin();
-    if (event.target == fModal) closeFormModal();
-}
+// Close modal if clicked outside of content (drag-safe click verification)
+let adminMouseDownOnBackdrop = false;
+let formMouseDownOnBackdrop = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const adminModal = document.getElementById('admin-modal');
+    const formModal = document.getElementById('form-modal');
+
+    if (adminModal) {
+        adminModal.addEventListener('mousedown', (e) => {
+            adminMouseDownOnBackdrop = (e.target === adminModal);
+        });
+        adminModal.addEventListener('click', (e) => {
+            if (e.target === adminModal && adminMouseDownOnBackdrop) {
+                closeAdmin();
+            }
+            adminMouseDownOnBackdrop = false;
+        });
+    }
+
+    if (formModal) {
+        formModal.addEventListener('mousedown', (e) => {
+            formMouseDownOnBackdrop = (e.target === formModal);
+        });
+        formModal.addEventListener('click', (e) => {
+            if (e.target === formModal && formMouseDownOnBackdrop) {
+                closeFormModal();
+            }
+            formMouseDownOnBackdrop = false;
+        });
+    }
+});
 
 // Copy email
 function copyEmail(email, element) {
@@ -1387,6 +1463,15 @@ function openFormModal(title, fields) {
 }
 
 function closeFormModal() {
+    if (currentCropper) {
+        try { currentCropper.destroy(); } catch (e) { console.warn(e); }
+        currentCropper = null;
+    }
+    if (currentGalleryCropper) {
+        try { currentGalleryCropper.destroy(); } catch (e) { console.warn(e); }
+        currentGalleryCropper = null;
+    }
+    currentUncroppedImage = null;
     document.getElementById('form-modal').classList.remove('show');
     // Only remove modal-open if the other modal isn't open
     if (!document.getElementById('admin-modal').classList.contains('show')) {
@@ -1394,6 +1479,10 @@ function closeFormModal() {
     }
     currentEditId = null;
     currentEditType = null;
+    
+    // Clear dynamic form fields to avoid residual elements
+    const formFields = document.getElementById('form-fields');
+    if (formFields) formFields.innerHTML = '';
 }
 
 window.handleFormSubmit = async function (e) {
@@ -1475,6 +1564,36 @@ window.handleFormSubmit = async function (e) {
             renderOfficers();
             renderAdminLists();
             return; // Return early because we don't use Supabase table logic
+        } else if (currentEditType === 'gallery') {
+            const photo = {
+                id: currentEditId || 'photo-' + Date.now(),
+                ratio: parseFloat(data.ratio) || 1.5,
+                image: data.image || ''
+            };
+            
+            if (!photo.image) {
+                alert("Please choose and crop an image.");
+                pendingCloudSaves--;
+                return;
+            }
+            
+            if (!appData.galleryPhotos) appData.galleryPhotos = [];
+            
+            if (currentEditId) {
+                const idx = appData.galleryPhotos.findIndex(p => String(p.id) === String(currentEditId));
+                if (idx !== -1) {
+                    appData.galleryPhotos[idx] = photo;
+                }
+            } else {
+                appData.galleryPhotos.push(photo);
+            }
+            
+            localStorage.setItem('sf_club_data', JSON.stringify(appData));
+            await saveGlobalState();
+            closeFormModal();
+            renderGallery();
+            renderAdminLists();
+            return;
         }
 
         if (error) throw error;
@@ -2144,6 +2263,323 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+// --- PHOTO GALLERY REDESIGN FUNCTIONS ---
+function renderGallery() {
+    const stack = document.getElementById('polaroid-stack');
+    if (!stack) return;
+    
+    const photos = appData.galleryPhotos || [];
+    stack.innerHTML = photos.map(photo => {
+        const ratio = photo.ratio || 1.5;
+        return `
+            <div class="polaroid" data-id="${photo.id}">
+                <div class="polaroid-inner" style="aspect-ratio: ${ratio};">
+                    <img src="${photo.image}" alt="" style="width: 100%; height: auto; display: block;" onerror="this.src='https://ui-avatars.com/api/?name=Image+Missing&background=12284C&color=fff'">
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    updateStackStyles();
+    
+    // Update external link button
+    const linkBtn = document.querySelector('.memories-actions a');
+    if (linkBtn) {
+        linkBtn.href = appData.galleryLink || '#';
+    }
+}
+
+function renderAdminGalleryList() {
+    const list = document.getElementById('admin-gallery-list');
+    const linkInput = document.getElementById('gallery-button-link');
+    if (linkInput) {
+        linkInput.value = appData.galleryLink || '';
+    }
+    if (!list) return;
+    
+    const photos = appData.galleryPhotos || [];
+    if (photos.length === 0) {
+        list.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 2rem; border: 1px dashed var(--border-color); border-radius: 8px; width: 100%;">
+                No gallery photos yet. Click "Add Photo" to start!
+            </div>
+        `;
+        if (list._sortable) {
+            list._sortable.destroy();
+            list._sortable = null;
+        }
+        return;
+    }
+    
+    list.innerHTML = photos.map((photo, index) => {
+        return `
+            <div class="manage-item card-item" data-id="${photo.id}" style="padding: 0.75rem;">
+                <div class="drag-handle" style="cursor: grab; margin-right: 0.5rem; color: var(--text-muted);">
+                    <i data-lucide="grip-vertical"></i>
+                </div>
+                <img src="${photo.image}" alt="" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; border: 1px solid var(--border-color); flex-shrink: 0;" onerror="this.src='https://ui-avatars.com/api/?name=Missing&background=12284C&color=fff'">
+                <div class="item-info" style="flex: 1; display: flex; flex-direction: column; gap: 0.1rem; line-height: 1.3;">
+                    <strong style="color: var(--primary); font-size: 1rem;">Photo #${index + 1}</strong>
+                </div>
+                <div class="item-actions">
+                    <button class="icon-btn" onclick="editGalleryPhoto('${photo.id}')" title="Crop/Edit Photo"><i data-lucide="crop"></i></button>
+                    <button class="icon-btn danger" onclick="deleteGalleryPhoto('${photo.id}')" title="Delete Photo"><i data-lucide="trash-2"></i></button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    if (window.Sortable) {
+        if (list._sortable) list._sortable.destroy();
+        list._sortable = Sortable.create(list, {
+            handle: '.drag-handle',
+            animation: 300,
+            forceFallback: true,
+            fallbackClass: "sortable-fallback",
+            fallbackOnBody: true,
+            onEnd: function () { saveGalleryOrder(); }
+        });
+    }
+    
+    if (window.lucide) lucide.createIcons();
+}
+
+window.saveGalleryOrder = function() {
+    const list = document.getElementById('admin-gallery-list');
+    if (!list) return;
+    const orderIds = Array.from(list.querySelectorAll('.manage-item')).map(item => item.getAttribute('data-id'));
+    
+    const sortedPhotos = [];
+    orderIds.forEach(id => {
+        const photo = appData.galleryPhotos.find(p => String(p.id) === String(id));
+        if (photo) sortedPhotos.push(photo);
+    });
+    
+    // Add any photos that weren't in the list
+    appData.galleryPhotos.forEach(p => {
+        if (!orderIds.includes(String(p.id))) sortedPhotos.push(p);
+    });
+    
+    appData.galleryPhotos = sortedPhotos;
+    localStorage.setItem('sf_club_data', JSON.stringify(appData));
+    saveGlobalState();
+    renderGallery();
+}
+
+window.saveGalleryLink = async function() {
+    const input = document.getElementById('gallery-button-link');
+    if (!input) return;
+    
+    const url = input.value.trim();
+    if (!url) {
+        alert("Please enter a valid link.");
+        return;
+    }
+    
+    appData.galleryLink = url;
+    localStorage.setItem('sf_club_data', JSON.stringify(appData));
+    
+    const saveBtn = document.getElementById('save-gallery-link-btn');
+    const originalText = saveBtn ? saveBtn.innerHTML : "Save Link";
+    if (saveBtn) {
+        saveBtn.innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px; margin-right: 8px;"></i> Saved!';
+        if (window.lucide) lucide.createIcons();
+    }
+    
+    await saveGlobalState();
+    renderGallery();
+    
+    setTimeout(() => {
+        if (saveBtn) {
+            saveBtn.innerHTML = originalText;
+            if (window.lucide) lucide.createIcons();
+        }
+    }, 1500);
+}
+
+window.showAddPhotoForm = function () {
+    currentEditType = 'gallery';
+    openFormModal('Add Gallery Photo', getGalleryFields());
+}
+
+window.editGalleryPhoto = function (id) {
+    const photo = appData.galleryPhotos.find(p => String(p.id) === String(id));
+    currentEditType = 'gallery';
+    currentEditId = id;
+    openFormModal('Edit Gallery Photo', getGalleryFields(photo));
+}
+
+window.deleteGalleryPhoto = async function (id) {
+    if (confirm('Are you sure you want to remove this photo from the gallery?')) {
+        appData.galleryPhotos = appData.galleryPhotos.filter(p => String(p.id) !== String(id));
+        localStorage.setItem('sf_club_data', JSON.stringify(appData));
+        await saveGlobalState();
+        renderGallery();
+        renderAdminLists();
+    }
+}
+
+function getGalleryFields(data = {}) {
+    let defaultPreview = '';
+    if (data.image) {
+        defaultPreview = `<img src="${data.image}" style="width: 100%; height: 100%; object-fit: contain;">`;
+    } else {
+        defaultPreview = `<i data-lucide="image" style="width: 40px; height: 40px; color: #94a3b8;"></i>`;
+    }
+    
+    return `
+        <div class="form-group" style="text-align: center; margin-bottom: 1.5rem;">
+            <div id="gallery-photo-preview-box" style="width: 100%; max-width: 380px; height: 250px; border: 2px dashed var(--border-color); border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden; margin: 0 auto; position: relative;">
+                ${defaultPreview}
+            </div>
+            
+            <!-- Highly prominent action buttons below preview box when image exists -->
+            <div id="gallery-photo-actions" style="display: ${data.image ? 'flex' : 'none'}; gap: 0.75rem; justify-content: center; margin-top: 1rem; margin-bottom: 1rem;">
+                <button type="button" class="btn btn-sm btn-navy" onclick="recropGalleryPhoto()" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; padding: 0 1.25rem; font-weight: 500;">
+                    <i data-lucide="crop" style="width: 16px; height: 16px;"></i> Crop Image
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeGalleryPhoto()" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; padding: 0 1.25rem; border-color: #dc2626; color: #dc2626; background: transparent; font-weight: 500;">
+                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i> Remove
+                </button>
+            </div>
+            
+            <div id="gallery-choose-image-container" class="smooth-collapse mt-3 ${data.image ? '' : 'expanded'}">
+                <label for="gallery-photo-upload" class="btn btn-sm btn-navy" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin: 0;">
+                    <i data-lucide="upload" style="width:16px;height:16px;margin-right:6px;"></i> Choose Image
+                </label>
+                <input type="file" id="gallery-photo-upload" accept="image/*" style="display:none;" onchange="handleGalleryPhoto(this)">
+            </div>
+            
+            <input type="hidden" name="image" id="gallery-image-b64" value="${data.image || ''}">
+            <input type="hidden" name="ratio" id="gallery-image-ratio" value="${data.ratio || '1.5'}">
+            
+            <div id="gallery-crop-container" class="smooth-collapse mt-4" style="text-align: left;">
+                <div style="max-width: 100%; max-height: 350px; margin-bottom: 1rem; overflow: hidden;">
+                    <img id="gallery-crop-image" style="max-width: 100%; display: block;">
+                </div>
+                <div style="text-align: right;">
+                    <button type="button" class="btn btn-sm btn-navy" onclick="confirmGalleryCrop()">Crop & Save</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+let currentGalleryCropper = null;
+let currentUncroppedImage = null;
+
+window.handleGalleryPhoto = function(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            currentUncroppedImage = e.target.result; // Keep reference to uncropped high-res file
+            
+            const cropContainer = document.getElementById('gallery-crop-container');
+            const cropImage = document.getElementById('gallery-crop-image');
+            
+            cropContainer.classList.add('expanded');
+            cropImage.src = e.target.result;
+            
+            if (currentGalleryCropper) {
+                currentGalleryCropper.destroy();
+            }
+            
+            // free-form aspect ratio (aspectRatio: NaN allows any crop dimension)
+            currentGalleryCropper = new Cropper(cropImage, {
+                viewMode: 1,
+                minCropBoxWidth: 100,
+                minCropBoxHeight: 100
+            });
+        };
+        reader.readAsDataURL(file);
+        input.value = '';
+    }
+}
+
+window.confirmGalleryCrop = function() {
+    if (currentGalleryCropper) {
+        // Retrieve cropped canvas and scale down to lightweight max bounds preserving ratio
+        const canvas = currentGalleryCropper.getCroppedCanvas({
+            maxWidth: 800,
+            maxHeight: 800
+        });
+        
+        const b64 = canvas.toDataURL('image/jpeg', 0.85);
+        document.getElementById('gallery-image-b64').value = b64;
+        
+        const ratio = canvas.width / canvas.height;
+        document.getElementById('gallery-image-ratio').value = ratio;
+        
+        const previewBox = document.getElementById('gallery-photo-preview-box');
+        if (previewBox) {
+            previewBox.innerHTML = `<img src="${b64}" style="width: 100%; height: 100%; object-fit: contain;">`;
+        }
+        
+        // Show actions row and collapse upload button
+        const actionsRow = document.getElementById('gallery-photo-actions');
+        if (actionsRow) {
+            actionsRow.style.display = 'flex';
+        }
+        
+        document.getElementById('gallery-crop-container').classList.remove('expanded');
+        document.getElementById('gallery-choose-image-container').classList.remove('expanded');
+        
+        currentGalleryCropper.destroy();
+        currentGalleryCropper = null;
+        if (window.lucide) lucide.createIcons();
+    }
+}
+
+window.removeGalleryPhoto = function() {
+    currentUncroppedImage = null; // Clear uncropped image reference
+    document.getElementById('gallery-image-b64').value = '';
+    document.getElementById('gallery-image-ratio').value = '1.5';
+    
+    const previewBox = document.getElementById('gallery-photo-preview-box');
+    if (previewBox) {
+        previewBox.innerHTML = `<i data-lucide="image" style="width: 40px; height: 40px; color: #94a3b8;"></i>`;
+    }
+    
+    // Hide actions row and expand upload container
+    const actionsRow = document.getElementById('gallery-photo-actions');
+    if (actionsRow) {
+        actionsRow.style.display = 'none';
+    }
+    
+    document.getElementById('gallery-choose-image-container').classList.add('expanded');
+    if (window.lucide) lucide.createIcons();
+}
+
+window.recropGalleryPhoto = function() {
+    const b64Input = document.getElementById('gallery-image-b64');
+    if (!b64Input) return;
+    
+    // Choose uncropped high-res first, fallback to current preview b64
+    const imageSrc = currentUncroppedImage || b64Input.value;
+    if (!imageSrc) return;
+    
+    const cropContainer = document.getElementById('gallery-crop-container');
+    const cropImage = document.getElementById('gallery-crop-image');
+    const chooseImageContainer = document.getElementById('gallery-choose-image-container');
+    
+    cropContainer.classList.add('expanded');
+    if (chooseImageContainer) {
+        chooseImageContainer.classList.remove('expanded');
+    }
+    cropImage.src = imageSrc;
+    
+    if (currentGalleryCropper) {
+        currentGalleryCropper.destroy();
+    }
+    
+    currentGalleryCropper = new Cropper(cropImage, {
+        viewMode: 1,
+        minCropBoxWidth: 100,
+        minCropBoxHeight: 100
+    });
+}
+
 // --- POLAROID STACK CAROUSEL ---
 let isRotating = false;
 let stackTimer = null;

@@ -9,7 +9,7 @@
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
     <meta name="description" content="Sparking curiosity through hands-on field trips, teamwork, and exploration.">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20260522">
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=Caveat:wght@700&display=swap"
         rel="stylesheet">
@@ -127,66 +127,7 @@
             
             <div class="polaroid-stack-wrapper">
                 <div class="polaroid-stack" id="polaroid-stack">
-                    <div class="polaroid vertical active">
-                        <div class="polaroid-inner">
-                            <img src="images/1.jpg" alt="Club Photo 1">
-                            <div class="polaroid-label"></div>
-                        </div>
-                    </div>
-                    <div class="polaroid horizontal">
-                        <div class="polaroid-inner">
-                            <img src="images/2.jpg" alt="Club Photo 2">
-                            <div class="polaroid-label"></div>
-                        </div>
-                    </div>
-                    <div class="polaroid vertical">
-                        <div class="polaroid-inner">
-                            <img src="images/3.jpg" alt="Club Photo 3">
-                            <div class="polaroid-label"></div>
-                        </div>
-                    </div>
-                    <div class="polaroid horizontal">
-                        <div class="polaroid-inner">
-                            <img src="images/4.jpg" alt="Club Photo 4">
-                            <div class="polaroid-label"></div>
-                        </div>
-                    </div>
-                    <div class="polaroid horizontal">
-                        <div class="polaroid-inner">
-                            <img src="images/5.jpg" alt="Club Photo 5">
-                            <div class="polaroid-label"></div>
-                        </div>
-                    </div>
-                    <div class="polaroid horizontal">
-                        <div class="polaroid-inner">
-                            <img src="images/6.jpg" alt="Club Photo 6">
-                            <div class="polaroid-label"></div>
-                        </div>
-                    </div>
-                    <div class="polaroid vertical">
-                        <div class="polaroid-inner">
-                            <img src="images/7.jpg" alt="Club Photo 7">
-                            <div class="polaroid-label"></div>
-                        </div>
-                    </div>
-                    <div class="polaroid horizontal">
-                        <div class="polaroid-inner">
-                            <img src="images/8.jpg" alt="Club Photo 8">
-                            <div class="polaroid-label"></div>
-                        </div>
-                    </div>
-                    <div class="polaroid horizontal">
-                        <div class="polaroid-inner">
-                            <img src="images/9.jpg" alt="Club Photo 9">
-                            <div class="polaroid-label"></div>
-                        </div>
-                    </div>
-                    <div class="polaroid vertical">
-                        <div class="polaroid-inner">
-                            <img src="images/10.jpg" alt="Club Photo 10">
-                            <div class="polaroid-label"></div>
-                        </div>
-                    </div>
+                    <!-- Populated dynamically by JS -->
                 </div>
                 
                 <div class="stack-controls">
@@ -465,6 +406,9 @@
                         <button class="tab-btn" onclick="switchTab('tab-calendar')" title="Calendar"><i
                                 data-lucide="calendar"></i>
                             <span class="tab-text">Calendar</span></button>
+                        <button class="tab-btn" onclick="switchTab('tab-gallery')" title="Photo Gallery"><i
+                                data-lucide="image"></i>
+                            <span class="tab-text">Gallery</span></button>
                         <button class="tab-btn" onclick="switchTab('tab-subscribers')" title="Subscribers"><i
                                 data-lucide="users"></i>
                             <span class="tab-text">Subscribers</span></button>
@@ -505,6 +449,28 @@
                                 </div>
                             </div>
                             <div id="admin-calendar-list" class="manage-list">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tab-gallery">
+                            <div class="section-manage-header">
+                                <h3>Photo Gallery Management</h3>
+                                <button class="btn btn-sm btn-navy" onclick="showAddPhotoForm()"><i
+                                        data-lucide="plus"></i> Add Photo</button>
+                            </div>
+                            
+                            <!-- Gallery Link Edit Row -->
+                            <div class="card card-white" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+                                <h4 style="margin-bottom: 0.75rem; font-family: var(--font-heading); color: var(--primary); font-size: 1.1rem;">"View Full Gallery" Button Link</h4>
+                                <div style="display: flex; gap: 0.75rem; align-items: center; width: 100%;">
+                                    <input type="url" id="gallery-button-link" class="form-control" placeholder="https://drive.google.com/..." style="flex: 1; height: 42px;">
+                                    <button id="save-gallery-link-btn" class="btn btn-navy" onclick="saveGalleryLink()" style="height: 42px; padding: 0 1.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">Save Link</button>
+                                </div>
+                            </div>
+                            
+                            <h4 style="color: var(--primary); margin-bottom: 0.75rem; font-size: 1.1rem;">Photos List (Drag to Rearrange)</h4>
+                            <div id="admin-gallery-list" class="manage-list" style="padding-right: 0.5rem; overflow-x: hidden;">
                                 <!-- Populated by JS -->
                             </div>
                         </div>
@@ -635,7 +601,7 @@
         </button>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=20260522"></script>
 </body>
 
 </html>
