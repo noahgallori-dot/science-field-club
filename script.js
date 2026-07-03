@@ -95,7 +95,16 @@ const DEFAULT_DATA = {
         { id: 'default-omsi', image: 'images/omsi.jpg', ratio: 1.333 },
         { id: 'default-bird', image: 'images/bird.jpg', ratio: 1.498 }
     ],
-    galleryLink: "https://drive.google.com/drive/folders/1r8F1S_kSP0OAeFQEv73BoU8LMIqvhUAe?usp=sharing"
+    galleryLink: "https://drive.google.com/drive/folders/1r8F1S_kSP0OAeFQEv73BoU8LMIqvhUAe?usp=sharing",
+    pageText: {
+        heroSubtitle: "Sparking curiosity through hands-on field trips, teamwork, and exploration. Discover your passion outside the classroom.",
+        missionTitle1: "Why We Exist",
+        missionText1: "Our school is small and rural, and students rarely get science-focused field trips. STEM students rarely get access to labs, research centers, wildlife programs, or tech companies. This club gives students real-world experiences they wouldn’t get otherwise.",
+        missionTitle2: "Building Skills",
+        missionText2: "We focus on building leadership, planning, teamwork, and communication skills that matter for high school, college, and life. It creates a fun and meaningful way for students to explore science outside the classroom.",
+        updatesDesc: "Keep track of meetings, field trips, and form deadlines.\nReminder: Club meetings are held in Mr. Richeson's Room after school!",
+        feesAlert: "<strong>Important Note on Fees:</strong> All permission slips should be placed in a <strong>sealed envelope</strong> and turned in to Mr. Richeson. If paying with cash, include the payment inside and write your full name along with “Cash” on the front. If paying through Venmo (@krissy-allori), write your full name and “Venmo” on the front instead."
+    }
 };
 
 // INITIALIZE WITH LOCAL DATA IMMEDIATELY
@@ -222,6 +231,18 @@ async function loadDataAndSync() {
                 if (savedData?.galleryLink) appData.galleryLink = savedData.galleryLink;
             }
 
+            // 8. PROCESS PAGE TEXT
+            if (cloudState.pageText) {
+                appData.pageText = cloudState.pageText;
+            } else {
+                const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
+                if (savedData?.pageText) {
+                    appData.pageText = savedData.pageText;
+                } else {
+                    appData.pageText = JSON.parse(JSON.stringify(DEFAULT_DATA.pageText));
+                }
+            }
+
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
         } else {
             console.log("Cloud is empty. Migrating your local data...");
@@ -253,7 +274,8 @@ async function saveGlobalState() {
         officers: appData.officers || [],
         officersOrder: appData.officersOrder || [],
         galleryPhotos: appData.galleryPhotos || [],
-        galleryLink: appData.galleryLink || ""
+        galleryLink: appData.galleryLink || "",
+        pageText: appData.pageText || {}
     };
 
     pendingCloudSaves++;
@@ -331,9 +353,54 @@ function checkPreviousSignup() {
 document.addEventListener('DOMContentLoaded', checkPreviousSignup);
 window.addEventListener('load', checkPreviousSignup);
 
+// --- DYNAMIC PAGE TEXT RENDERING ---
+function escapeHtml(str) {
+    if (!str) return "";
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function renderPageText() {
+    const pt = appData.pageText || DEFAULT_DATA.pageText;
+    if (!pt) return;
+
+    const heroSubtitle = document.getElementById('dyn-hero-subtitle');
+    if (heroSubtitle && pt.heroSubtitle) heroSubtitle.innerText = pt.heroSubtitle;
+
+    const missionTitle1 = document.getElementById('dyn-mission-title-1');
+    if (missionTitle1 && pt.missionTitle1) missionTitle1.innerText = pt.missionTitle1;
+
+    const missionText1 = document.getElementById('dyn-mission-text-1');
+    if (missionText1 && pt.missionText1) missionText1.innerText = pt.missionText1;
+
+    const missionTitle2 = document.getElementById('dyn-mission-title-2');
+    if (missionTitle2 && pt.missionTitle2) missionTitle2.innerText = pt.missionTitle2;
+
+    const missionText2 = document.getElementById('dyn-mission-text-2');
+    if (missionText2 && pt.missionText2) missionText2.innerText = pt.missionText2;
+
+    const updatesDesc = document.getElementById('dyn-updates-desc');
+    if (updatesDesc && pt.updatesDesc) {
+        updatesDesc.innerHTML = pt.updatesDesc.replace(/\n/g, '<br>');
+    }
+
+    const feesAlert = document.getElementById('dyn-fees-alert');
+    if (feesAlert && pt.feesAlert) {
+        feesAlert.innerHTML = pt.feesAlert;
+    }
+}
+
 // --- RENDERING ---
 
 function renderAll() {
+    try {
+        renderPageText();
+    } catch (e) { console.error("Error rendering page text:", e); }
+
     try {
         renderTimeline();
     } catch (e) { console.error("Error rendering timeline:", e); }
@@ -994,7 +1061,170 @@ function createOfficerManageItem(officer) {
         renderAdminGalleryList();
     } catch (e) { console.error("Error rendering admin gallery list:", e); }
 
+    try {
+        renderPageTextEditor();
+    } catch (e) { console.error("Error rendering page text editor:", e); }
+
     if (window.lucide) lucide.createIcons();
+}
+
+function insertFormattingAtCursor(el, tag) {
+    if (!el) return;
+
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const text = el.value;
+    const selected = text.substring(start, end);
+
+    let openTag = "";
+    let closeTag = "";
+    if (tag === 'bold') {
+        openTag = "<strong>";
+        closeTag = "</strong>";
+    } else if (tag === 'italic') {
+        openTag = "<em>";
+        closeTag = "</em>";
+    }
+
+    el.value = text.substring(0, start) + openTag + selected + closeTag + text.substring(end);
+
+    // Restore cursor inside the tags
+    el.focus();
+    el.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
+}
+
+function attachFormattingShortcuts(container) {
+    if (!container) return;
+    container.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+            e.preventDefault();
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+                insertFormattingAtCursor(e.target, 'bold');
+            }
+        }
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'i' || e.key === 'I')) {
+            e.preventDefault();
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+                insertFormattingAtCursor(e.target, 'italic');
+            }
+        }
+    });
+}
+
+function renderPageTextEditor() {
+    const container = document.getElementById('admin-pagetext-container');
+    if (!container) return;
+
+    const pt = appData.pageText || DEFAULT_DATA.pageText;
+
+    container.innerHTML = `
+        <form id="admin-pagetext-form" onsubmit="savePageText(event)">
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div>
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; font-family: var(--font-heading);">Hero Section</h4>
+                    <div class="form-group">
+                        <label style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; display: block;">Hero Subtitle</label>
+                        <textarea name="heroSubtitle" class="form-control" rows="2" required placeholder="Hero Subtitle">${escapeHtml(pt.heroSubtitle)}</textarea>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="color: var(--primary); margin-top: 1rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; font-family: var(--font-heading);">Our Mission Section</h4>
+                    <div class="grid-2" style="gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; display: block;">Mission Card 1 Title</label>
+                            <input type="text" name="missionTitle1" value="${escapeHtml(pt.missionTitle1)}" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; display: block;">Mission Card 2 Title</label>
+                            <input type="text" name="missionTitle2" value="${escapeHtml(pt.missionTitle2)}" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="gap: 1rem;">
+                        <div class="form-group">
+                            <label style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; display: block;">Mission Card 1 Text</label>
+                            <textarea name="missionText1" class="form-control" rows="4" required>${escapeHtml(pt.missionText1)}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; display: block;">Mission Card 2 Text</label>
+                            <textarea name="missionText2" class="form-control" rows="4" required>${escapeHtml(pt.missionText2)}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="color: var(--primary); margin-top: 1rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; font-family: var(--font-heading);">Updates & Events Section</h4>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; display: block;">Updates Description & Reminder</label>
+                        <textarea name="updatesDesc" class="form-control" rows="3" required>${escapeHtml(pt.updatesDesc)}</textarea>
+                        <small style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; display: block;">Use a new line for the Reminder statement.</small>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; display: block;">Important Note on Fees Alert Box</label>
+                        <textarea name="feesAlert" class="form-control" rows="4" required>${escapeHtml(pt.feesAlert)}</textarea>
+                    </div>
+                </div>
+
+                <small style="color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="info" style="width: 14px; height: 14px; flex-shrink: 0;"></i>
+                    Use <strong>Ctrl+B</strong> for bold and <strong>Ctrl+I</strong> for italic on selected text.
+                </small>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                    <button type="submit" class="btn btn-navy" id="save-pagetext-btn" style="height: 42px; padding: 0 2rem; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-heading);">
+                        <i data-lucide="save" style="width: 18px; height: 18px;"></i> Save Page Text
+                    </button>
+                </div>
+            </div>
+        </form>
+    `;
+
+    // Attach Ctrl+B / Ctrl+I shortcuts to the form container
+    attachFormattingShortcuts(container);
+
+    if (window.lucide) lucide.createIcons();
+}
+
+window.savePageText = async function (e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    appData.pageText = {
+        heroSubtitle: data.heroSubtitle,
+        missionTitle1: data.missionTitle1,
+        missionText1: data.missionText1,
+        missionTitle2: data.missionTitle2,
+        missionText2: data.missionText2,
+        updatesDesc: data.updatesDesc,
+        feesAlert: data.feesAlert
+    };
+
+    localStorage.setItem('sf_club_data', JSON.stringify(appData));
+
+    const btn = document.getElementById('save-pagetext-btn');
+    const originalText = btn ? btn.innerHTML : "Save Page Text";
+    if (btn) {
+        btn.innerHTML = '<i data-lucide="check" style="width: 18px; height: 18px;"></i> Saved!';
+        if (window.lucide) lucide.createIcons();
+    }
+
+    pendingCloudSaves++;
+    try {
+        await saveGlobalState();
+        renderAll();
+    } catch (err) {
+        console.error("Error saving page text:", err);
+    } finally {
+        pendingCloudSaves--;
+    }
+
+    setTimeout(() => {
+        if (btn) {
+            btn.innerHTML = originalText;
+            if (window.lucide) lucide.createIcons();
+        }
+    }, 1500);
 }
 
 window.copyAllSubscribers = function (btn) {

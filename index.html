@@ -71,7 +71,7 @@
             <div class="hero-glass">
                 <div class="badge">Banks, Oregon</div>
                 <h1 class="hero-title">Experience Science in the <span class="text-navy">Real World.</span></h1>
-                <p class="hero-subtitle">Sparking curiosity through hands-on field trips, teamwork, and exploration.
+                <p class="hero-subtitle" id="dyn-hero-subtitle">Sparking curiosity through hands-on field trips, teamwork, and exploration.
                     Discover your passion outside the classroom.</p>
                 <div class="hero-actions">
                     <a href="#events" class="btn btn-navy">Upcoming Trips</a>
@@ -90,15 +90,15 @@
             <div class="grid-2">
                 <div class="card card-white">
                     <div class="card-icon"><i data-lucide="microscope"></i></div>
-                    <h3>Why We Exist</h3>
-                    <p>Our school is small and rural, and students rarely get science-focused field trips. STEM students
+                    <h3 id="dyn-mission-title-1">Why We Exist</h3>
+                    <p id="dyn-mission-text-1">Our school is small and rural, and students rarely get science-focused field trips. STEM students
                         rarely get access to labs, research centers, wildlife programs, or tech companies. This club
                         gives students real-world experiences they wouldn’t get otherwise.</p>
                 </div>
                 <div class="card card-white">
                     <div class="card-icon"><i data-lucide="users"></i></div>
-                    <h3>Building Skills</h3>
-                    <p>We focus on building leadership, planning, teamwork, and communication skills that matter for
+                    <h3 id="dyn-mission-title-2">Building Skills</h3>
+                    <p id="dyn-mission-text-2">We focus on building leadership, planning, teamwork, and communication skills that matter for
                         high school, college, and life. It creates a fun and meaningful way for students to explore
                         science outside the classroom.</p>
                 </div>
@@ -115,29 +115,33 @@
                 <div class="badge">Moments & Memories</div>
                 <h2 class="section-title memories-title">Science in Action</h2>
                 <p class="section-desc">
-                    From high-tech research labs to the rugged Oregon wilderness, our club captures every moment of discovery. Check out our snapshots from recent field trips and get a glimpse into the life of a Science Field Club member.
+                    From high-tech research labs to the rugged Oregon wilderness, our club captures every moment of
+                    discovery. Check out our snapshots from recent field trips and get a glimpse into the life of a
+                    Science Field Club member.
                 </p>
                 <div class="memories-actions">
-                    <a href="https://drive.google.com/drive/folders/1r8F1S_kSP0OAeFQEv73BoU8LMIqvhUAe?usp=sharing" 
-                       target="_blank" class="btn btn-primary-glass">
+                    <a href="https://drive.google.com/drive/folders/1r8F1S_kSP0OAeFQEv73BoU8LMIqvhUAe?usp=sharing"
+                        target="_blank" class="btn btn-primary-glass">
                         <i data-lucide="external-link" style="width: 18px; height: 18px;"></i> View Full Gallery
                     </a>
                 </div>
             </div>
-            
+
             <div class="polaroid-stack-wrapper">
                 <div class="polaroid-stack" id="polaroid-stack">
                     <!-- Populated dynamically by JS -->
                 </div>
-                
+
                 <div class="stack-controls">
-                    <button class="stack-btn prev" onclick="rotateStack('prev')"><i data-lucide="chevron-left"></i></button>
-                    <button class="stack-btn next" onclick="rotateStack('next')"><i data-lucide="chevron-right"></i></button>
+                    <button class="stack-btn prev" onclick="rotateStack('prev')"><i
+                            data-lucide="chevron-left"></i></button>
+                    <button class="stack-btn next" onclick="rotateStack('next')"><i
+                            data-lucide="chevron-right"></i></button>
                 </div>
             </div>
         </div>
     </section>
-        </div>
+    </div>
     </section>
 
     <!-- Events & Due Dates Section -->
@@ -145,7 +149,7 @@
         <div class="container">
             <div class="section-header">
                 <h2>Updates & Events</h2>
-                <p class="section-desc">Keep track of meetings, field trips, and form deadlines.
+                <p class="section-desc" id="dyn-updates-desc">Keep track of meetings, field trips, and form deadlines.
                     <br><strong>Reminder:</strong> Club meetings are held in <strong>Mr. Richeson's Room</strong> after
                     school!
                 </p>
@@ -153,12 +157,11 @@
 
             <div class="alert-box">
                 <i data-lucide="alert-circle" class="alert-icon"></i>
-                <div class="alert-content">
+                <div class="alert-content" id="dyn-fees-alert">
                     <strong>Important Note on Fees:</strong> All permission slips should be placed in a <strong>sealed
                         envelope</strong>
                     and turned in to Mr. Richeson. If paying with cash, include the payment inside and write your
-                    full name along with “Cash” on the front. If paying through Venmo (@krissy-allori), write
-                    your full name and “Venmo” on the front instead.
+                    full name along with “Cash” on the front. If paying through Venmo (@krissy-allori), write your full name and “Venmo” on the front instead.
                 </div>
             </div>
 
@@ -170,9 +173,12 @@
                         <i data-lucide="chevron-down" class="filter-arrow"></i>
                     </button>
                     <div class="dropdown-menu">
-                        <div id="filter-upcoming-item" class="dropdown-item" onclick="selectTimelineFilter('upcoming', 'Upcoming Events')">Upcoming Events</div>
-                        <div id="filter-past-item" class="dropdown-item" onclick="selectTimelineFilter('past', 'Past Events')">Past Events</div>
-                        <div id="filter-all-item" class="dropdown-item" onclick="selectTimelineFilter('all', 'All Events')">All Events</div>
+                        <div id="filter-upcoming-item" class="dropdown-item"
+                            onclick="selectTimelineFilter('upcoming', 'Upcoming Events')">Upcoming Events</div>
+                        <div id="filter-past-item" class="dropdown-item"
+                            onclick="selectTimelineFilter('past', 'Past Events')">Past Events</div>
+                        <div id="filter-all-item" class="dropdown-item"
+                            onclick="selectTimelineFilter('all', 'All Events')">All Events</div>
                     </div>
                 </div>
             </div>
@@ -415,6 +421,9 @@
                         <button class="tab-btn" onclick="switchTab('tab-officers')" title="Officers"><i
                                 data-lucide="user-cog"></i>
                             <span class="tab-text">Officers</span></button>
+                        <button class="tab-btn" onclick="switchTab('tab-text')" title="Page Text"><i
+                                data-lucide="edit-3"></i>
+                            <span class="tab-text">Page Text</span></button>
                     </div>
 
                     <div class="dashboard-content-area">
@@ -459,18 +468,25 @@
                                 <button class="btn btn-sm btn-navy" onclick="showAddPhotoForm()"><i
                                         data-lucide="plus"></i> Add Photo</button>
                             </div>
-                            
+
                             <!-- Gallery Link Edit Row -->
                             <div class="card card-white" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-                                <h4 style="margin-bottom: 0.75rem; font-family: var(--font-heading); color: var(--primary); font-size: 1.1rem;">"View Full Gallery" Button Link</h4>
+                                <h4
+                                    style="margin-bottom: 0.75rem; font-family: var(--font-heading); color: var(--primary); font-size: 1.1rem;">
+                                    "View Full Gallery" Button Link</h4>
                                 <div style="display: flex; gap: 0.75rem; align-items: center; width: 100%;">
-                                    <input type="url" id="gallery-button-link" class="form-control" placeholder="https://drive.google.com/..." style="flex: 1; height: 42px;">
-                                    <button id="save-gallery-link-btn" class="btn btn-navy" onclick="saveGalleryLink()" style="height: 42px; padding: 0 1.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">Save Link</button>
+                                    <input type="url" id="gallery-button-link" class="form-control"
+                                        placeholder="https://drive.google.com/..." style="flex: 1; height: 42px;">
+                                    <button id="save-gallery-link-btn" class="btn btn-navy" onclick="saveGalleryLink()"
+                                        style="height: 42px; padding: 0 1.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">Save
+                                        Link</button>
                                 </div>
                             </div>
-                            
-                            <h4 style="color: var(--primary); margin-bottom: 0.75rem; font-size: 1.1rem;">Photos List (Drag to Rearrange)</h4>
-                            <div id="admin-gallery-list" class="manage-list" style="padding-right: 0.5rem; overflow-x: hidden;">
+
+                            <h4 style="color: var(--primary); margin-bottom: 0.75rem; font-size: 1.1rem;">Photos List
+                                (Drag to Rearrange)</h4>
+                            <div id="admin-gallery-list" class="manage-list"
+                                style="padding-right: 0.5rem; overflow-x: hidden;">
                                 <!-- Populated by JS -->
                             </div>
                         </div>
@@ -479,12 +495,12 @@
                             <div class="section-manage-header">
                                 <h3>Text Subscriptions</h3>
                                 <div class="manage-header-actions">
-                                    <button class="btn btn-sm btn-outline-navy"
-                                        onclick="exportSubscribersCSV()"><i data-lucide="download"
+                                    <button class="btn btn-sm btn-outline-navy" onclick="exportSubscribersCSV()"><i
+                                            data-lucide="download"
                                             style="width: 16px; height: 16px; margin-right: 8px;"></i> Export
                                         CSV</button>
-                                    <button class="btn btn-sm btn-navy"
-                                        onclick="copyAllSubscribers(this)"><i data-lucide="copy"
+                                    <button class="btn btn-sm btn-navy" onclick="copyAllSubscribers(this)"><i
+                                            data-lucide="copy"
                                             style="width: 16px; height: 16px; margin-right: 8px;"></i> Copy All</button>
                                 </div>
                             </div>
@@ -515,6 +531,15 @@
                                     style="display: flex; flex-direction: column; gap: 0.75rem;">
                                     <!-- Populated by JS -->
                                 </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="tab-text">
+                            <div class="section-manage-header">
+                                <h3>Page Text Editor</h3>
+                            </div>
+                            <div id="admin-pagetext-container" class="card card-white" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                                <!-- Populated dynamically by JS -->
                             </div>
                         </div>
                     </div>
