@@ -187,47 +187,7 @@
                 <!-- Populated by JS -->
             </div>
 
-            <!-- Wide Banner for Text Reminders -->
-            <div class="card card-beige"
-                style="margin-top: 3rem; padding: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem;">
-                <div style="flex: 1 1 300px;">
-                    <h3
-                        style="display: flex; align-items: center; gap: 0.75rem; font-family: var(--font-heading); color: var(--text-heading); font-size: 1.5rem; margin-bottom: 0.5rem;">
-                        <i data-lucide="message-square" style="color: var(--primary);"></i> Want text reminders?
-                    </h3>
-                    <p style="color: var(--text-muted); font-size: 1rem; margin: 0;">Sign up for automated text
-                        reminders about upcoming field trips and deadlines.</p>
-                </div>
 
-                <div id="text-reminder-form-container" style="flex: 1 1 500px;">
-                    <form id="text-reminder-form" style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%;">
-                        <div class="form-group" style="flex: 2; min-width: 180px;">
-                            <input type="text" id="reminder-first-name" class="form-control" required
-                                placeholder="First Name" autocomplete="off">
-                        </div>
-                        <div class="form-group" style="flex: 1.5; min-width: 160px;">
-                            <input type="tel" id="reminder-phone" class="form-control" required
-                                placeholder="(XXX) XXX-XXXX" maxlength="14" pattern="\(\d{3}\) \d{3}-\d{4}"
-                                autocomplete="off">
-                        </div>
-                        <button type="submit" class="btn btn-navy"
-                            style="font-family: var(--font-heading); flex: 0 0 auto; padding-left: 1.25rem; padding-right: 1.25rem;">Sign
-                            Up</button>
-                    </form>
-                </div>
-
-                <div id="text-reminder-success"
-                    style="display: none; flex: 1 1 500px; background: rgba(22, 163, 74, 0.1); border: 1px solid rgba(22, 163, 74, 0.3); border-radius: 8px; padding: 1.25rem; align-items: center; gap: 0.75rem;">
-                    <i data-lucide="check-circle"
-                        style="width: 24px; height: 24px; color: #16a34a; flex-shrink: 0;"></i>
-                    <div style="text-align: left; line-height: 1.4;">
-                        <span
-                            style="color: var(--text-heading); font-family: var(--font-heading); font-weight: bold;">Submitted!</span>
-                        <span style="color: var(--text-muted); font-size: 0.95rem;">You will soon receive a text.
-                            Please reply <strong>#stay</strong> to confirm your subscription!</span>
-                    </div>
-                </div>
-            </div>
 
         </div>
     </section>
@@ -415,9 +375,7 @@
                         <button class="tab-btn" onclick="switchTab('tab-gallery')" title="Photo Gallery"><i
                                 data-lucide="image"></i>
                             <span class="tab-text">Gallery</span></button>
-                        <button class="tab-btn" onclick="switchTab('tab-subscribers')" title="Subscribers"><i
-                                data-lucide="users"></i>
-                            <span class="tab-text">Subscribers</span></button>
+
                         <button class="tab-btn" onclick="switchTab('tab-officers')" title="Officers"><i
                                 data-lucide="user-cog"></i>
                             <span class="tab-text">Officers</span></button>
@@ -491,23 +449,7 @@
                             </div>
                         </div>
 
-                        <div class="tab-content" id="tab-subscribers">
-                            <div class="section-manage-header">
-                                <h3>Text Subscriptions</h3>
-                                <div class="manage-header-actions">
-                                    <button class="btn btn-sm btn-outline-navy" onclick="exportSubscribersCSV()"><i
-                                            data-lucide="download"
-                                            style="width: 16px; height: 16px; margin-right: 8px;"></i> Export
-                                        CSV</button>
-                                    <button class="btn btn-sm btn-navy" onclick="copyAllSubscribers(this)"><i
-                                            data-lucide="copy"
-                                            style="width: 16px; height: 16px; margin-right: 8px;"></i> Copy All</button>
-                                </div>
-                            </div>
-                            <div id="admin-subscribers-list" class="manage-list">
-                                <!-- Populated by JS -->
-                            </div>
-                        </div>
+
 
                         <div class="tab-content" id="tab-officers">
                             <div class="section-manage-header">

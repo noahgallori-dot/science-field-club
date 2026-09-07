@@ -112,11 +112,10 @@ let appData = JSON.parse(localStorage.getItem('sf_club_data')) || JSON.parse(JSO
 
 async function loadDataAndSync() {
     try {
-        const [cal, res, docs, subs] = await Promise.all([
+        const [cal, res, docs] = await Promise.all([
             supabaseClient.from('calendar').select('*').order('id', { ascending: true }),
             supabaseClient.from('resources').select('*').order('id', { ascending: true }),
-            supabaseClient.from('admin_docs').select('*').order('id', { ascending: true }),
-            supabaseClient.from('subscribers').select('*').order('id', { ascending: false })
+            supabaseClient.from('admin_docs').select('*').order('id', { ascending: true })
         ]);
 
         const hasCloudData = (cal.data?.length > 0 || res.data?.length > 0 || docs.data?.length > 0);
@@ -168,16 +167,7 @@ async function loadDataAndSync() {
                 appData.adminDocs = uniqueDocs;
             }
 
-            // 5. PROCESS SUBSCRIBERS
-            // Priority: Real table -> Cloud State Row -> Local Storage
-            if (!subs.error && subs.data?.length > 0) {
-                appData.subscribers = subs.data;
-            } else if (cloudState.subscribers) {
-                appData.subscribers = cloudState.subscribers;
-            } else {
-                const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
-                if (savedData?.subscribers) appData.subscribers = savedData.subscribers;
-            }
+
 
             // 6. PROCESS OFFICERS
             if (cloudState.officers) {
@@ -266,10 +256,9 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 async function saveGlobalState() {
-    // This function packs subscribers and ordering into a single row in the existing docs table
+    // This function packs internal ordering and state into a single row in the existing docs table
     // This achieves cross-device sync without requiring new tables or columns.
     const state = {
-        subscribers: appData.subscribers || [],
         adminDocsOrder: appData.adminDocsOrder || [],
         officers: appData.officers || [],
         officersOrder: appData.officersOrder || [],
@@ -335,23 +324,7 @@ function saveData() {
     renderAll();
 }
 
-// Check if user already signed up for text reminders
-function checkPreviousSignup() {
-    if (localStorage.getItem('sf_club_signed_up') === 'true') {
-        const formContainer = document.getElementById('text-reminder-form-container');
-        const successDiv = document.getElementById('text-reminder-success');
-        if (formContainer && successDiv) {
-            formContainer.style.display = 'none';
-            successDiv.style.display = 'flex';
-            successDiv.style.opacity = '1';
-            successDiv.style.transform = 'none';
-            if (window.lucide) lucide.createIcons();
-        }
-    }
-}
-// Run check on load
-document.addEventListener('DOMContentLoaded', checkPreviousSignup);
-window.addEventListener('load', checkPreviousSignup);
+
 
 // --- DYNAMIC PAGE TEXT RENDERING ---
 function escapeHtml(str) {
@@ -900,31 +873,7 @@ function renderAdminLists() {
         `).join('');
     }
 
-    // Admin Subscribers List
-    const subsList = document.getElementById('admin-subscribers-list');
-    if (subsList) {
-        if (!appData.subscribers || appData.subscribers.length === 0) {
-            subsList.innerHTML = `
-                <div style="height: 150px; display: flex; align-items: center; justify-content: center; width: 100%; color: var(--text-muted); font-style: italic; font-size: 1.1rem;">
-                    No subscribers yet.
-                </div>`;
-        } else {
-            subsList.innerHTML = (appData.subscribers || []).map(sub => `
-                <div class="manage-item card-item" style="padding: 0.75rem 1rem;" data-id="${sub.id || sub.phone}">
-                    <div class="item-info">
-                        <strong style="color: var(--primary);">${sub.name}</strong>
-                        <div onclick="copyText('${sub.phone}', this)" style="font-family: var(--font-body); font-size: 0.95rem; margin-top: 0.35rem; cursor: pointer; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s;" title="Click to copy" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">
-                            <i data-lucide="copy" style="width: 14px; height: 14px; opacity: 0.5;"></i>
-                            <span>${sub.phone}</span>
-                        </div>
-                    </div>
-                    <div class="item-actions">
-                        <button class="icon-btn danger" onclick="deleteSubscriber(${sub.id ? sub.id : `'${sub.phone}'`})"><i data-lucide="trash-2"></i></button>
-                    </div>
-                </div>
-            `).join('');
-        }
-    }
+
 
     // Admin Officers List
     const officersList = document.getElementById('admin-officers-list');
@@ -1227,116 +1176,7 @@ window.savePageText = async function (e) {
     }, 1500);
 }
 
-window.copyAllSubscribers = function (btn) {
-    if (!appData.subscribers || appData.subscribers.length === 0) return;
-    const list = appData.subscribers.map(s => `${s.name}\t${s.phone}`).join('\n');
-    navigator.clipboard.writeText(list).then(() => {
-        // Use getBoundingClientRect for sub-pixel precision to prevent 1-2px jumps
-        const rect = btn.getBoundingClientRect();
-        const originalTransition = btn.style.transition;
 
-        btn.style.transition = 'none';
-        btn.style.width = rect.width + 'px';
-        btn.style.height = rect.height + 'px';
-        btn.style.overflow = 'hidden';
-
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = '<i data-lucide="check" style="width: 16px; height: 16px; margin-right: 8px;"></i>Copied!';
-        if (window.lucide) window.lucide.createIcons();
-        setTimeout(() => {
-            btn.innerHTML = originalHtml;
-            btn.style.width = '';
-            btn.style.height = '';
-            btn.style.overflow = '';
-            btn.style.transition = originalTransition;
-            if (window.lucide) window.lucide.createIcons();
-        }, 1500);
-    });
-}
-
-window.exportSubscribersCSV = function () {
-    if (!appData.subscribers || appData.subscribers.length === 0) {
-        alert("No subscribers to export.");
-        return;
-    }
-
-    // Create CSV content
-    const header = "Name,Phone\n";
-    const rows = appData.subscribers.map(s => `"${s.name}","${s.phone}"`).join("\n");
-    const csvContent = header + rows;
-
-    // Create a Blob and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "subscribers.csv");
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-window.copyText = function (text, element) {
-    navigator.clipboard.writeText(text).then(() => {
-        const originalHtml = element.innerHTML;
-        const rect = element.getBoundingClientRect();
-        const originalTransition = element.style.transition;
-
-        // Lock both dimensions with sub-pixel precision and disable transitions
-        element.style.transition = 'none';
-        element.style.width = rect.width + 'px';
-        element.style.height = rect.height + 'px';
-        element.style.overflow = 'hidden';
-
-        element.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px; color: #16a34a; margin-right: 6px;"></i>Copied!';
-        if (window.lucide) window.lucide.createIcons();
-        setTimeout(() => {
-            element.innerHTML = originalHtml;
-            element.style.width = '';
-            element.style.height = '';
-            element.style.overflow = '';
-            element.style.transition = originalTransition;
-            if (window.lucide) window.lucide.createIcons();
-        }, 1500);
-    });
-}
-
-window.deleteSubscriber = async function (idStr) {
-    if (confirm('Remove this subscriber?')) {
-        pendingCloudSaves++;
-        try {
-            // Optimistic UI: Remove from DOM immediately to prevent flash
-            const row = document.querySelector(`#admin-subscribers-list [data-id="${idStr}"]`);
-            if (row) {
-                row.style.opacity = '0';
-                row.style.transform = 'translateX(20px)';
-                row.style.transition = 'all 0.3s ease';
-                setTimeout(() => row.remove(), 300);
-            }
-
-            if (typeof idStr === 'number') {
-                await supabaseClient.from('subscribers').delete().eq('id', idStr);
-            } else {
-                await supabaseClient.from('subscribers').delete().eq('phone', idStr);
-            }
-
-            appData.subscribers = appData.subscribers.filter(s => s.id !== idStr && s.phone !== idStr);
-            localStorage.setItem('sf_club_data', JSON.stringify(appData));
-
-            // Sync to cloud state
-            await saveGlobalState();
-
-            // If the list is now empty, re-render to show centering
-            if (appData.subscribers.length === 0) renderAdminLists();
-        } catch (err) {
-            console.error("Error deleting subscriber:", err);
-            renderAdminLists(); // Revert on failure
-        } finally {
-            pendingCloudSaves--;
-        }
-    }
-}
 
 function updateTimelineHeader() {
     const now = new Date();
@@ -2032,94 +1872,7 @@ function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// --- TEXT REMINDERS ---
-const phoneInput = document.getElementById('reminder-phone');
-if (phoneInput) {
-    phoneInput.addEventListener('input', function (e) {
-        // Keep only digits, up to 10
-        const input = e.target.value.replace(/\D/g, '').substring(0, 10);
-        const zip = input.substring(0, 3);
-        const middle = input.substring(3, 6);
-        const last = input.substring(6, 10);
 
-        if (input.length > 6) {
-            e.target.value = `(${zip}) ${middle}-${last}`;
-        } else if (input.length > 3) {
-            e.target.value = `(${zip}) ${middle}`;
-        } else if (input.length > 0) {
-            e.target.value = `(${zip}`;
-        } else {
-            e.target.value = '';
-        }
-    });
-}
-
-const reminderForm = document.getElementById('text-reminder-form');
-if (reminderForm) {
-    reminderForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-
-        const firstName = document.getElementById('reminder-first-name').value;
-        const phone = document.getElementById('reminder-phone').value;
-
-        if (!appData.subscribers) appData.subscribers = [];
-        appData.subscribers.unshift({ name: firstName, phone: phone, id: Date.now() });
-        localStorage.setItem('sf_club_signed_up', 'true');
-        localStorage.setItem('sf_club_data', JSON.stringify(appData));
-
-        // Sync to cloud row
-        saveGlobalState();
-        renderAdminLists();
-
-        try {
-            // Also attempt direct insert in case they DO have the table
-            await supabaseClient.from('subscribers').insert({ name: firstName, phone: phone });
-        } catch (err) { /* Silent fail if table missing */ }
-
-        // Send Email notification using EmailJS
-        try {
-            const now = new Date();
-            const emailParams = {
-                name: firstName,
-                phone: phone,
-                date: now.toLocaleDateString(),
-                time: now.toLocaleTimeString()
-            };
-            if (typeof emailjs !== 'undefined') {
-                emailjs.send('service_eosubks', 'template_pycgjtk', emailParams, 'W3ns6jMkHbfgnmWK9');
-            }
-        } catch (err) {
-            console.error("EmailJS error:", err);
-        }
-
-        const formContainer = document.getElementById('text-reminder-form-container');
-        const successDiv = document.getElementById('text-reminder-success');
-
-        // 1. Fade out and slide down the form
-        formContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-        formContainer.style.opacity = '0';
-        formContainer.style.transform = 'translateY(10px)';
-
-        setTimeout(() => {
-            formContainer.style.display = 'none';
-
-            // 2. Prepare the success message state
-            successDiv.style.opacity = '0';
-            successDiv.style.transform = 'translateY(10px)';
-            successDiv.style.display = 'flex';
-
-            // Force a browser reflow before animating in
-            void successDiv.offsetWidth;
-
-            // 3. Fade in and slide up the success message
-            successDiv.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-            successDiv.style.opacity = '1';
-            successDiv.style.transform = 'translateY(0)';
-
-            if (window.lucide) lucide.createIcons();
-        }, 300);
-    });
-}
 
 // --- CHAT WIDGET INVERSION ---
 function initChatInversion() {
