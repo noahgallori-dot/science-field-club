@@ -104,6 +104,13 @@ const DEFAULT_DATA = {
         missionText2: "We focus on building leadership, planning, teamwork, and communication skills that matter for high school, college, and life. It creates a fun and meaningful way for students to explore science outside the classroom.",
         updatesDesc: "Keep track of meetings, field trips, and form deadlines.\nReminder: Club meetings are held in Mr. Richeson's Room after school!",
         feesAlert: "<strong>Important Note on Fees:</strong> All permission slips should be placed in a <strong>sealed envelope</strong> and turned in to Mr. Richeson. If paying with cash, include the payment inside and write your full name along with “Cash” on the front. If paying through Venmo (@krissy-allori), write your full name and “Venmo” on the front instead."
+    },
+    liveActivity: {
+        enabled: false,
+        title: "Live Meeting Poll / Activity",
+        description: "Please cast your vote or submit your response for today's meeting activity!",
+        url: "",
+        buttonText: "Open Google Form"
     }
 };
 
@@ -233,6 +240,18 @@ async function loadDataAndSync() {
                 }
             }
 
+            // 9. PROCESS LIVE ACTIVITY
+            if (cloudState.liveActivity) {
+                appData.liveActivity = cloudState.liveActivity;
+            } else {
+                const savedData = JSON.parse(localStorage.getItem('sf_club_data'));
+                if (savedData?.liveActivity) {
+                    appData.liveActivity = savedData.liveActivity;
+                } else {
+                    appData.liveActivity = JSON.parse(JSON.stringify(DEFAULT_DATA.liveActivity));
+                }
+            }
+
             localStorage.setItem('sf_club_data', JSON.stringify(appData));
         } else {
             console.log("Cloud is empty. Migrating your local data...");
@@ -264,7 +283,8 @@ async function saveGlobalState() {
         officersOrder: appData.officersOrder || [],
         galleryPhotos: appData.galleryPhotos || [],
         galleryLink: appData.galleryLink || "",
-        pageText: appData.pageText || {}
+        pageText: appData.pageText || {},
+        liveActivity: appData.liveActivity || {}
     };
 
     pendingCloudSaves++;
@@ -397,6 +417,14 @@ function renderAll() {
     try {
         renderGallery();
     } catch (e) { console.error("Error rendering gallery:", e); }
+
+    try {
+        renderLiveActivity();
+    } catch (e) { console.error("Error rendering live activity:", e); }
+
+    try {
+        renderAdminLiveActivity();
+    } catch (e) { console.error("Error rendering admin live activity:", e); }
 
     if (window.lucide) {
         try {
@@ -1478,6 +1506,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeFormModal();
             }
             formMouseDownOnBackdrop = false;
+        });
+    }
+
+    const liveFormModal = document.getElementById('live-form-modal');
+    let liveFormMouseDownOnBackdrop = false;
+    if (liveFormModal) {
+        liveFormModal.addEventListener('mousedown', (e) => {
+            liveFormMouseDownOnBackdrop = (e.target === liveFormModal);
+        });
+        liveFormModal.addEventListener('click', (e) => {
+            if (e.target === liveFormModal && liveFormMouseDownOnBackdrop) {
+                closeLiveFormModal();
+            }
+            liveFormMouseDownOnBackdrop = false;
         });
     }
 });
@@ -2832,3 +2874,234 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 });
+
+// ==========================================================================
+// LIVE MEETING ACTIVITY / GOOGLE FORM CONTROLLER
+// ==========================================================================
+
+function getEmbeddedGoogleFormUrl(rawUrl) {
+    if (!rawUrl) return "";
+    let url = rawUrl.trim();
+    // If it's a standard Google Forms viewform link, convert or append embedded=true
+    if (url.includes('docs.google.com/forms')) {
+        if (!url.includes('embedded=true')) {
+            url += (url.includes('?') ? '&' : '?') + 'embedded=true';
+        }
+    }
+    return url;
+}
+
+function renderLiveActivity() {
+    const banner = document.getElementById('live-activity-banner');
+    if (!banner) return;
+
+    const live = appData.liveActivity;
+    if (live && live.enabled && live.url && live.url.trim() !== '') {
+        const titleEl = document.getElementById('live-banner-title');
+        const descEl = document.getElementById('live-banner-desc');
+        const linkEl = document.getElementById('live-banner-link');
+        const btnTextEl = document.getElementById('live-banner-btn-text');
+
+        if (titleEl) titleEl.innerText = live.title || "Meeting Activity & Poll";
+        if (descEl) {
+            const descTextEl = descEl.querySelector('.live-desc-text');
+            if (descTextEl) {
+                descTextEl.innerText = live.description || "Participate in today's activity!";
+            } else {
+                descEl.innerText = live.description || "Participate in today's activity!";
+            }
+        }
+        if (linkEl) linkEl.href = live.url.trim();
+        if (btnTextEl) btnTextEl.innerText = live.buttonText || "Open Form";
+
+        banner.style.display = 'block';
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+function renderAdminLiveActivity() {
+    const live = appData.liveActivity || DEFAULT_DATA.liveActivity;
+    if (!live) return;
+
+    const urlInput = document.getElementById('admin-live-url');
+    const titleInput = document.getElementById('admin-live-title');
+    const btnTextInput = document.getElementById('admin-live-btn-text');
+    const descInput = document.getElementById('admin-live-desc');
+
+    // Only update inputs if they are not currently being focused/edited by the user
+    if (urlInput && document.activeElement !== urlInput) urlInput.value = live.url || '';
+    if (titleInput && document.activeElement !== titleInput) titleInput.value = live.title || '';
+    if (btnTextInput && document.activeElement !== btnTextInput) btnTextInput.value = live.buttonText || '';
+    if (descInput && document.activeElement !== descInput) descInput.value = live.description || '';
+
+    const pill = document.getElementById('admin-live-status-pill');
+    const pillText = document.getElementById('admin-live-status-text');
+    const pillSub = document.getElementById('admin-live-status-sub');
+    const toggleBtn = document.getElementById('admin-live-toggle-btn');
+    const toggleBtnText = document.getElementById('admin-live-toggle-btn-text');
+
+    const isLive = Boolean(live.enabled && live.url && live.url.trim() !== '');
+
+    if (pill && pillText && pillSub) {
+        if (isLive) {
+            pill.classList.add('active');
+            pillText.innerText = "LIVE BROADCAST ACTIVE";
+            pillSub.innerText = "Activity is currently visible to all students on the home page.";
+        } else {
+            pill.classList.remove('active');
+            pillText.innerText = "Inactive";
+            pillSub.innerText = "Activity is currently hidden from the home page.";
+        }
+    }
+
+    if (toggleBtn && toggleBtnText) {
+        if (isLive) {
+            toggleBtn.classList.add('btn-active-off');
+            toggleBtn.innerHTML = `<i data-lucide="power"></i> <span id="admin-live-toggle-btn-text">Turn OFF Broadcast</span>`;
+        } else {
+            toggleBtn.classList.remove('btn-active-off');
+            toggleBtn.innerHTML = `<i data-lucide="radio"></i> <span id="admin-live-toggle-btn-text">Turn ON Broadcast</span>`;
+        }
+    }
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+window.saveLiveActivitySettings = async function () {
+    const urlInput = document.getElementById('admin-live-url');
+    const titleInput = document.getElementById('admin-live-title');
+    const btnTextInput = document.getElementById('admin-live-btn-text');
+    const descInput = document.getElementById('admin-live-desc');
+    const statusEl = document.getElementById('live-save-status');
+
+    const url = urlInput ? urlInput.value.trim() : '';
+    const title = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : "Meeting Activity & Poll";
+    const buttonText = (btnTextInput && btnTextInput.value.trim()) ? btnTextInput.value.trim() : "Open Google Form";
+    const description = (descInput && descInput.value.trim()) ? descInput.value.trim() : "Please participate in today's club meeting activity below!";
+
+    if (!appData.liveActivity) {
+        appData.liveActivity = { enabled: false };
+    }
+
+    appData.liveActivity.url = url;
+    appData.liveActivity.title = title;
+    appData.liveActivity.buttonText = buttonText;
+    appData.liveActivity.description = description;
+
+    localStorage.setItem('sf_club_data', JSON.stringify(appData));
+    await saveGlobalState();
+
+    if (statusEl) {
+        statusEl.innerText = "✓ Saved & synced to cloud!";
+        statusEl.style.color = "#10b981";
+        setTimeout(() => {
+            if (statusEl) statusEl.innerText = "";
+        }, 3000);
+    }
+
+    renderLiveActivity();
+    renderAdminLiveActivity();
+};
+
+window.toggleLiveActivity = async function () {
+    const urlInput = document.getElementById('admin-live-url');
+    const currentUrl = (urlInput ? urlInput.value.trim() : '') || (appData.liveActivity?.url || '');
+
+    if (!appData.liveActivity?.enabled && !currentUrl) {
+        alert("Please enter a Google Form URL first before turning on the live broadcast!");
+        if (urlInput) urlInput.focus();
+        return;
+    }
+
+    // Save current field values first
+    await window.saveLiveActivitySettings();
+
+    // Toggle enabled state
+    appData.liveActivity.enabled = !appData.liveActivity.enabled;
+    localStorage.setItem('sf_club_data', JSON.stringify(appData));
+    await saveGlobalState();
+
+    renderLiveActivity();
+    renderAdminLiveActivity();
+};
+
+window.testLiveActivityLink = function () {
+    const urlInput = document.getElementById('admin-live-url');
+    const url = (urlInput ? urlInput.value.trim() : '') || (appData.liveActivity?.url || '');
+    if (!url) {
+        alert("Please enter a Google Form URL first to test!");
+        if (urlInput) urlInput.focus();
+        return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+};
+
+window.openLiveFormModal = function () {
+    const modal = document.getElementById('live-form-modal');
+    const iframe = document.getElementById('live-form-iframe');
+    const loading = document.getElementById('live-form-loading');
+    const title = document.getElementById('live-modal-title');
+    const extLink = document.getElementById('live-modal-external-link');
+
+    if (!modal || !appData.liveActivity) return;
+
+    const formUrl = appData.liveActivity.url || '';
+    if (!formUrl) return;
+
+    if (title) title.innerText = appData.liveActivity.title || "Live Meeting Activity";
+    if (extLink) extLink.href = formUrl;
+
+    if (loading) loading.style.display = 'flex';
+    if (iframe) {
+        iframe.src = getEmbeddedGoogleFormUrl(formUrl);
+    }
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeLiveFormModal = function () {
+    const modal = document.getElementById('live-form-modal');
+    const iframe = document.getElementById('live-form-iframe');
+    if (modal) modal.classList.remove('active');
+    if (iframe) iframe.src = '';
+    document.body.style.overflow = '';
+};
+
+window.onLiveFormIframeLoaded = function () {
+    const loading = document.getElementById('live-form-loading');
+    if (loading) {
+        loading.style.display = 'none';
+    }
+};
+
+// Periodic background sync for live activity during meetings (every 12s)
+setInterval(async () => {
+    try {
+        const { data } = await supabaseClient
+            .from('admin_docs')
+            .select('url')
+            .eq('name', '_INTERNAL_STATE_')
+            .single();
+
+        if (data && data.url) {
+            const cloudState = JSON.parse(data.url);
+            if (cloudState.liveActivity) {
+                const current = JSON.stringify(appData.liveActivity || {});
+                const incoming = JSON.stringify(cloudState.liveActivity);
+                if (current !== incoming) {
+                    appData.liveActivity = cloudState.liveActivity;
+                    localStorage.setItem('sf_club_data', JSON.stringify(appData));
+                    renderLiveActivity();
+                    renderAdminLiveActivity();
+                }
+            }
+        }
+    } catch (e) {
+        // Silent catch for background heartbeat
+    }
+}, 12000);
+
