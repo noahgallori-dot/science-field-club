@@ -79,8 +79,8 @@ const DEFAULT_DATA = {
         { id: 8, name: "Interest Meeting Presentation", url: "https://docs.google.com/presentation/d/13x1XAR4pWUyfpC36oilV68Znv3xxHawhGjjU99IzLYU/edit?usp=sharing" }
     ],
     officers: [
-        { id: 1, name: "Noah Allori", role: "President & Founder", email: "noaha2027@banks.k12.or.us", image: "images/noah.jpg", fallbackColor: "12284C", isAdvisor: false },
         { id: 2, name: "Finan Hailey", role: "Vice President", email: "finanh2028@banks.k12.or.us", image: "images/finan.jpg", fallbackColor: "12284C", isAdvisor: false },
+        { id: 1, name: "Noah Allori", role: "President & Founder", email: "noaha2027@banks.k12.or.us", image: "images/noah.jpg", fallbackColor: "12284C", isAdvisor: false },
         { id: 3, name: "Cassidy Acardi", role: "Secretary", email: "cassidya2027@banks.k12.or.us", image: "images/cassidy.jpg", fallbackColor: "12284C", isAdvisor: false },
         { id: 4, name: "Jane Bollmeier", role: "Fundraising Coordinator", email: "janeb2027@banks.k12.or.us", image: "images/jane.jpg", fallbackColor: "12284C", isAdvisor: false },
         { id: 5, name: "Dylan McDonald", role: "Treasurer", email: "dylanm2027@banks.k12.or.us", image: "images/dylan.jpg", fallbackColor: "12284C", isAdvisor: false },
@@ -116,6 +116,18 @@ const DEFAULT_DATA = {
 
 // INITIALIZE WITH LOCAL DATA IMMEDIATELY
 let appData = JSON.parse(localStorage.getItem('sf_club_data')) || JSON.parse(JSON.stringify(DEFAULT_DATA));
+
+// Ensure President is 2nd in list (in the middle on PC, 1st on mobile) if using the initial legacy order
+if (appData.officers && appData.officers.length >= 2 && appData.officers[0].id === 1 && appData.officers[1].id === 2) {
+    const temp = appData.officers[0];
+    appData.officers[0] = appData.officers[1];
+    appData.officers[1] = temp;
+    if (appData.officersOrder && appData.officersOrder[0] == '1' && appData.officersOrder[1] == '2') {
+        appData.officersOrder[0] = '2';
+        appData.officersOrder[1] = '1';
+    }
+    localStorage.setItem('sf_club_data', JSON.stringify(appData));
+}
 
 async function loadDataAndSync() {
     try {
@@ -185,6 +197,10 @@ async function loadDataAndSync() {
             }
             const savedOfficersOrder = cloudState.officersOrder || (JSON.parse(localStorage.getItem('sf_club_data'))?.officersOrder);
             if (savedOfficersOrder && appData.officers) {
+                if (savedOfficersOrder.length >= 2 && String(savedOfficersOrder[0]) === '1' && String(savedOfficersOrder[1]) === '2') {
+                    savedOfficersOrder[0] = '2';
+                    savedOfficersOrder[1] = '1';
+                }
                 const stringOfficersOrder = savedOfficersOrder.map(String);
                 appData.officers = appData.officers.sort((a, b) => {
                     let indexA = stringOfficersOrder.indexOf(String(a.id));
